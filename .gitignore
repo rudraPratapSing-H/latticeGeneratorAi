@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+data/
+strength-labels/labels*.csv
+*.csv.gz
+search_results.json
+result_fixed.json
+sample_*.json
+p1.pt
+p2.pt
+r1.pt
+r3.pt
+predictor.pt
+metrics_test.csv
+r1_metrics.csv
+r3_metrics.csv
