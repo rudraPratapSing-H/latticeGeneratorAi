@@ -39,7 +39,7 @@ c_model.eval()
 #  Prepare datasets and loaders
 ptb_mask = pd.read_csv(folder+'/ptb_mask.csv', delimiter = ",", header = None).to_numpy()
 
-dataset  = TensorDataset(adj_list, x, c_data)
+dataset  = TensorDataset(adj_list, x, stiffness)
 num_train = len(dataset)         
 test_batch_size = 2000
 split = test_batch_size

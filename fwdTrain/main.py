@@ -176,7 +176,7 @@ c_model.apply(weights_init)
 model.eval()
 saveResults = None
 
-dataset  = TensorDataset(adj_list, x, c_data)
+dataset  = TensorDataset(adj_list, x, stiffness)
 
 num_train = len(dataset)
 split = int(np.floor(valid_size * num_train))               # 5% of the data is used for validation
