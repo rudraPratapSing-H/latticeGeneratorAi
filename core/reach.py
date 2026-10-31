@@ -205,7 +205,32 @@ class ReachTable:
             "warnings": warnings,
         }
         result["message"] = self._message(level, result, pick["infeasible"], tol)
+        if level in ("extended", "outside"):
+            result["conflict"] = self._conflict(stiffness, strength, v["stiff"][row], S[row], modes)
+            if result["conflict"]:
+                result["message"] += " " + result["conflict"]["message"]
         return result
+
+    @staticmethod
+    def _conflict(stiffness, strength, got_stiff, got_strength, modes) -> dict[str, Any] | None:
+        """The requested value the nearest stored lattice misses by the most (stiff but weak, soft but strong ...)."""
+        worst = None
+        for name, tgt, got, mode, unit in (("stiffness", stiffness, got_stiff, modes["stiffness"], "GPa"),
+                                           ("strength", strength, got_strength, modes["strength"], "MPa")):
+            if tgt is None:
+                continue
+            for a in range(3):
+                if tgt[a] is None:
+                    continue
+                err = float(rel_errors(np.array([got[a]]), float(tgt[a]), mode)[0])
+                if worst is None or err > worst[0]:
+                    worst = (err, name, AX[a], float(tgt[a]), float(got[a]), unit)
+        if worst is None or worst[0] <= 0:
+            return None
+        err, name, axis, want, got, unit = worst
+        return {"value": f"{name}_{axis}", "requested": want, "nearest": round(got, 4), "error_pct": round(100 * err, 1),
+                "message": (f"The hardest value to match is {name} {axis.upper()}: you asked {want:g} {unit}, "
+                            f"the nearest stored lattice gives {got:.3g} {unit}.")}
 
     @staticmethod
     def _message(level: str, r: dict, reason: str | None, tol: float) -> str:

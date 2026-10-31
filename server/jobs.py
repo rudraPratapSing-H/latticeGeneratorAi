@@ -111,7 +111,12 @@ def run_job_sync(job_id: str, request: DesignRequest, *, k_values: list[int] | N
         top = rank_candidates(result["candidates"], request.n_results or 5)
         top = finalize_candidates(top, job_id, request, material, list(request.part.size_mm), request.part.cell_mm)
         save_results(job_id, sanitize(top))
-        meta = sanitize({"rounds": rounds_info(result["rounds"]), "infeasible": result["infeasible"]})
+        meta = sanitize({"rounds": rounds_info(result["rounds"]), "infeasible": result["infeasible"],
+                         "skipped_invalid": result.get("skipped_invalid", 0)})
+        if result.get("skipped_invalid"):
+            old = (get_job(job_id, include_candidates=False) or {}).get("warnings") or []
+            meta["warnings"] = old + [f"{result['skipped_invalid']} candidate(s) skipped: the solver result was not "
+                                      f"physical (not finite, or stiffer than any beam lattice can be)."]
 
         matched = any(c.get("matches_targets") for c in top)
         if result.get("stopped") or stop():

@@ -44,6 +44,11 @@ def _init_worker() -> None:
     import search_design  # noqa: F401  - also puts the solver folder on sys.path; imports numpy only
 
 
+def has_torch(_: int) -> bool:
+    """Worker-side check used by a test: workers must import only numpy and the solver, never PyTorch."""
+    return "torch" in sys.modules
+
+
 def ping(_: int) -> int:
     return os.getpid()
 

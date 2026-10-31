@@ -181,6 +181,7 @@ class ReachResponse(BaseModel):
     bounds: Bounds
     message: str
     warnings: list[str] = Field(default_factory=list)
+    conflict: dict | None = Field(default=None, description="The value hardest to match, when no stored lattice is close")
 
 
 CreateDesignRequest = DesignRequest
@@ -267,6 +268,7 @@ class JobResponse(BaseModel):
     rounds: list[RoundInfo] = Field(default_factory=list, description="Finished search rounds")
     infeasible: bool = Field(default=False, description="Stiffnesses add up to more than 1.05 x density x E_s")
     warnings: list[str] = Field(default_factory=list, description="Plain-language warnings")
+    skipped_invalid: int = Field(default=0, description="Candidates dropped because the solver result was not physical")
     reach: dict | None = Field(default=None, description="Dataset picker result for the request")
     candidates: list[Candidate] = Field(default_factory=list, description="List of generated lattice design candidates")
     request: dict | None = Field(default=None, description="The request this job was started with")

@@ -43,6 +43,22 @@ def is_out_of_memory(e: BaseException) -> bool:
     return "out of memory" in str(e).lower()
 
 
+def drop_unphysical(cands: list[dict[str, Any]], material: dict[str, Any]) -> tuple[list[dict[str, Any]], int]:
+    """Skip candidates whose solver result is not finite and positive, or whose three stiffnesses add up to more than
+    1.05 x density x E_s (a floppy-lattice artefact no beam lattice can reach). Returns (kept, how many were skipped)."""
+    kept = []
+    for c in cands:
+        st = list(c["verified"]["stiffness_gpa"].values())
+        ok = all(isinstance(v, (int, float)) and v == v and abs(v) != float("inf") and v > 0 for v in st)
+        if ok and sum(st) > 1.05 * c["rel_density"] * material["E_gpa"]:
+            ok = False
+        if ok:
+            kept.append(c)
+    for rank, c in enumerate(kept, 1):
+        c["rank"] = rank
+    return kept, len(cands) - len(kept)
+
+
 def _failure(y, b, E_gpa: float, yield_mpa: float) -> dict[str, str]:
     return {k: ("yield" if yv * yield_mpa <= bv * E_gpa * 1000 else "buckling") for k, yv, bv in zip("xyz", y, b)}
 
@@ -151,8 +167,9 @@ class Engine:
             j["predicted"]["governing_failure"] = _failure(c["pred"]["y"], c["pred"]["b"], mat["E_gpa"], mat["yield_mpa"])
             j["origin"] = "stored" if fallback else c["origin"]
             out.append(j)
+        out, skipped = drop_unphysical(out, mat)
         return {"material": sdm, "rounds": history, "infeasible": infeasible, "candidates": out, "request": echo,
-                "fallback": fallback, "elapsed_seconds": round(time.time() - t0, 2),
+                "fallback": fallback, "skipped_invalid": skipped, "elapsed_seconds": round(time.time() - t0, 2),
                 "stopped": bool(should_stop and should_stop())}
 
     # ------------------------------------------------------------------ memory fallback and stored-lattice fallback
