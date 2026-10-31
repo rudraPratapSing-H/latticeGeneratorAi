@@ -18,7 +18,7 @@ from typing import Any
 import core
 from server import preflight
 from server.schemas import DesignRequest
-from server.store import DEFAULT_DB_PATH, DEFAULT_RUNS_DIR, create_job, get_job
+from server.store import DEFAULT_DB_PATH, DEFAULT_RUNS_DIR, create_job, get_job, update_job_status
 
 DEMO_DIR = Path(__file__).resolve().parent.parent / "demo"
 _lock = threading.Lock()
@@ -47,10 +47,12 @@ def install() -> int:
             for name in ("request.json", "results.json"):
                 if (src / name).exists():
                     shutil.copyfile(src / name, dst / name)
+            meta = json.loads((src / "meta.json").read_text(encoding="utf-8"))
+            message = meta.pop("final_message", "Stored demo result.")
             if get_job(d["job_id"], DEFAULT_DB_PATH, include_candidates=False) is None:
-                meta = json.loads((src / "meta.json").read_text(encoding="utf-8"))
-                create_job(d["job_id"], status="done", stage="rank", progress=1.0,
-                           message=meta.pop("final_message", "Stored demo result."), meta=meta)
+                create_job(d["job_id"], status="done", stage="rank", progress=1.0, message=message, meta=meta)
+            else:                                         # a rebuilt demo store must replace what an older run copied in
+                update_job_status(d["job_id"], status="done", stage="rank", progress=1.0, message=message, meta=meta)
             n += 1
         _installed = True
         return n

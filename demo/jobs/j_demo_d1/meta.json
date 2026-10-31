@@ -35,10 +35,11 @@
       "best_error_pct": 2.53,
       "matched": true,
       "n_candidates": 259,
-      "round_seconds": 32.07,
-      "elapsed_seconds": 32.07
+      "round_seconds": 13.63,
+      "elapsed_seconds": 13.63
     }
   ],
   "infeasible": false,
+  "skipped_invalid": 0,
   "final_message": "Found 5 design(s) meeting every target."
 }

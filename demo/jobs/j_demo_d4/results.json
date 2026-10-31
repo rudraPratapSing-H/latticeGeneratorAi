@@ -261,6 +261,7 @@
     },
     "mass_g": 28.338,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -537,6 +538,7 @@
     },
     "mass_g": 42.528,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -801,6 +803,7 @@
     },
     "mass_g": 28.528,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": [
       "Closest design, not a match: worst target is off by 4.83%."
     ]
@@ -1083,6 +1086,7 @@
     },
     "mass_g": 32.809,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": [
       "Closest design, not a match: worst target is off by 7.68%."
     ]
@@ -1361,6 +1365,7 @@
     },
     "mass_g": 28.528,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": [
       "Closest design, not a match: worst target is off by 7.97%."
     ]

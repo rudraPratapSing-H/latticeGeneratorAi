@@ -95,3 +95,16 @@ def test_health_reports_why_the_models_are_not_loaded(client, monkeypatch):
     monkeypatch.setattr(core, "_engine", _Down())
     h = client.get("/api/health").json()
     assert h["status"] == "ok" and h["model_loaded"] is False and h["reason"] == "GPU out of memory"
+
+
+def test_reinstalling_replaces_stale_demo_metadata(client):
+    """A demo store rebuilt after an older copy was installed must show the new rounds and timings."""
+    from server.store import get_job, update_job_status
+    d = INDEX[1]["job_id"]
+    demo.install()
+    update_job_status(d, meta={"rounds": [{"round": 1, "k": 100, "best_error_pct": 99.0, "matched": False,
+                                           "n_candidates": 1, "round_seconds": 999.0, "elapsed_seconds": 999.0}]})
+    assert get_job(d, include_candidates=False)["rounds"][0]["round_seconds"] == 999.0
+    demo.install()
+    fresh = json.loads((DEMO / "jobs" / d / "meta.json").read_text(encoding="utf-8"))["rounds"][0]["round_seconds"]
+    assert get_job(d, include_candidates=False)["rounds"][0]["round_seconds"] == fresh

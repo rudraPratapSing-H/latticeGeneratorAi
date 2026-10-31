@@ -285,6 +285,7 @@
     },
     "mass_g": 42.812,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -573,6 +574,7 @@
     },
     "mass_g": 42.803,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -865,6 +867,7 @@
     },
     "mass_g": 43.401,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -1157,6 +1160,7 @@
     },
     "mass_g": 43.401,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   },
   {
@@ -1457,6 +1461,7 @@
     },
     "mass_g": 42.477,
     "mass_estimate": true,
+    "source": "generated",
     "warnings": []
   }
 ]

@@ -29,6 +29,16 @@ function Stop-Tree($proc) {
     if ($proc -and -not $proc.HasExited) { & taskkill /PID $proc.Id /T /F | Out-Null }
 }
 
+# optional .env (KEY=VALUE lines): settings that are not already set in this shell
+$dotenv = Join-Path $root ".env"
+if (Test-Path $dotenv) {
+    foreach ($line in Get-Content $dotenv) {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$' -and -not $line.TrimStart().StartsWith("#")) {
+            if (-not [Environment]::GetEnvironmentVariable($Matches[1])) { Set-Item -Path "Env:$($Matches[1])" -Value $Matches[2] }
+        }
+    }
+}
+
 # the web folder is called web/ in the plan; the teammate's checkout may still be lattice-web/
 $webDir = $null
 foreach ($name in @("web", "lattice-web")) {

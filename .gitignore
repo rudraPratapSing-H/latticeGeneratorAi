@@ -25,3 +25,6 @@ docs/review/*.stl
 docs/review/*.log
 .playwright-mcp/
 runs_review/
+
+# local settings (copy .env.example to .env)
+.env
