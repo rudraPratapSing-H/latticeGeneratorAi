@@ -1,4 +1,4 @@
-"""Build core/data/reach_table.npz from the solver labels (run once; the table is committed, the CSV is not).
+"""Build core/tables/reach_table.npz from the solver labels (run once; the table is committed, the CSV is not).
 
     python scripts/build_reach_table.py C:\\AI-manthan\\data\\model\\strength-labels\\labels_300k_x3.csv
 
@@ -18,7 +18,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 DENSITIES = (0.05, 0.15, 0.25)
-DEFAULT_OUT = ROOT / "core" / "data" / "reach_table.npz"
+DEFAULT_OUT = ROOT / "core" / "tables" / "reach_table.npz"
 
 
 def normal_block_to_E(d) -> np.ndarray:

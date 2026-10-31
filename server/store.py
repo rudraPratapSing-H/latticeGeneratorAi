@@ -174,6 +174,25 @@ def get_request(job_id: str, base_dir: str | Path = DEFAULT_RUNS_DIR) -> dict[st
         return None
 
 
+def save_meta(job_id: str, meta: dict[str, Any], base_dir: str | Path = DEFAULT_RUNS_DIR) -> None:
+    """Merge job extras (round, k, rounds, infeasible, warnings, reach) into runs/<job>/meta.json."""
+    d = Path(base_dir) / job_id
+    d.mkdir(parents=True, exist_ok=True)
+    cur = get_meta(job_id, base_dir)
+    cur.update(meta)
+    tmp = d / "meta.json.tmp"
+    tmp.write_text(json.dumps(cur, indent=2, allow_nan=False), encoding="utf-8")
+    tmp.replace(d / "meta.json")
+
+
+def get_meta(job_id: str, base_dir: str | Path = DEFAULT_RUNS_DIR) -> dict[str, Any]:
+    f = Path(base_dir) / job_id / "meta.json"
+    try:
+        return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
 def save_results(
     job_id: str,
     candidates: list[dict[str, Any]],
@@ -184,7 +203,7 @@ def save_results(
     results_dir.mkdir(parents=True, exist_ok=True)
     results_file = results_dir / "results.json"
     with open(results_file, "w", encoding="utf-8") as f:
-        json.dump(candidates, f, indent=2)
+        json.dump(candidates, f, indent=2, allow_nan=False)
     return results_file
 
 
@@ -229,8 +248,9 @@ def get_job(
     finally:
         conn.close()
 
+    runs_dir = Path(db_path).parent
+    job_data.update(get_meta(job_id, base_dir=runs_dir))
     if include_candidates:
-        runs_dir = Path(db_path).parent
         job_data["candidates"] = get_job_results(job_id, base_dir=runs_dir)
         job_data["request"] = get_request(job_id, base_dir=runs_dir)
 

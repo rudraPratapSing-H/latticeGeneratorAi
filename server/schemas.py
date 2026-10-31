@@ -24,6 +24,7 @@ class JobStatus(str, Enum):
     RUNNING = "running"
     DONE = "done"
     FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class JobStage(str, Enum):
@@ -153,6 +154,7 @@ class DesignRequest(BaseModel):
     modes: DesignModes = Field(default_factory=DesignModes, description="Optimization modes")
     tolerance_pct: float = Field(default=10.0, gt=0, le=50, description="Allowed deviation percentage")
     n_results: int = Field(default=5, ge=1, le=20, description="Number of candidate lattice designs to return")
+    force: bool = Field(default=False, description="Run even when the picker says no lattice can reach the target")
 
 
 class ReachRequest(BaseModel):
@@ -221,6 +223,8 @@ class Candidate(BaseModel):
     lattice: LatticeSpec = Field(..., description="Lattice structural geometry")
     predicted: PropertyEvaluation = Field(..., description="Properties predicted by the ML surrogate model")
     verified: PropertyEvaluation | None = Field(default=None, description="Properties verified by the physics solver")
+    mass_estimate: bool = Field(default=True, description="mass_g is density x part volume x material density")
+    warnings: list[str] = Field(default_factory=list, description="Plain-language notes (printability, shortfall)")
 
 
 DesignCandidate = Candidate
@@ -237,13 +241,31 @@ class JobCreateResponse(BaseModel):
     status: JobStatus = Field(default=JobStatus.QUEUED, description="Initial status of the queued job")
 
 
+class RoundInfo(BaseModel):
+    """One search round, as the engine reports it (best_error_pct is already in percent)."""
+    round: int
+    k: int
+    best_error_pct: float | None = None
+    matched: bool = False
+    n_candidates: int = 0
+    round_seconds: float = 0.0
+    elapsed_seconds: float = 0.0
+
+
 class JobResponse(BaseModel):
     """Status and result response for a design job."""
     job_id: str = Field(..., description="Unique job identifier")
-    status: JobStatus = Field(..., description="Current job status (queued, running, done, failed)")
+    status: JobStatus = Field(..., description="queued, running, done, failed or cancelled")
     stage: JobStage | None = Field(default=None, description="Current processing stage (search, repair, verify, rank)")
+    round: int | None = Field(default=None, description="Current search round (1-based)")
+    k: int | None = Field(default=None, description="Starting points in the current round")
     progress: float = Field(default=0.0, ge=0.0, le=1.0, description="Completion progress from 0.0 to 1.0")
     message: str | None = Field(default=None, description="Informational or diagnostic status message")
+    queue_position: int | None = Field(default=None, description="0 = running next; None when not queued")
+    rounds: list[RoundInfo] = Field(default_factory=list, description="Finished search rounds")
+    infeasible: bool = Field(default=False, description="Stiffnesses add up to more than 1.05 x density x E_s")
+    warnings: list[str] = Field(default_factory=list, description="Plain-language warnings")
+    reach: dict | None = Field(default=None, description="Dataset picker result for the request")
     candidates: list[Candidate] = Field(default_factory=list, description="List of generated lattice design candidates")
     request: dict | None = Field(default=None, description="The request this job was started with")
 

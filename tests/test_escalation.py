@@ -79,99 +79,42 @@ def test_infeasible_stiffness_sum():
 
 
 def test_rank_prefers_matches():
-    c = lambda i, err, m: {"id": i, "match_error_pct": err, "matches_targets": m, "rel_density": 0.1,
-                           "lattice": {"edges": [[0, ord(i)]]}}
+    c = lambda i, err, m: {"id": i, "match_error_pct": err, "matches_targets": m, "rel_density": 0.1}
     top = rank_candidates([c("a", 2.0, False), c("b", 9.0, True), c("c", 1.0, True)], 2)
     assert [t["id"] for t in top] == ["c", "b"] and [t["rank"] for t in top] == [1, 2]
 
 
 @pytest.mark.asyncio
-async def test_adaptive_escalation_break_early():
-    """Verify early exit from k_values loop when tolerance is met at k=100."""
+async def test_mock_replays_stored_run_that_matched_in_round_one():
+    """Targets near sample_3 (matched in round 1): one round, matches_targets true, real numbers."""
+    job_id = "j_replay_match"
     init_db()
-    job_id = "j_test_escalation_early"
     active_sse_queues[job_id] = asyncio.Queue()
-
-    # Broad tolerance (50%) ensures k=100 satisfies target
-    request = DesignRequest(
-        material="ti64",
-        part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
-        target=DesignTarget(
-            stiffness_gpa=AxisValues(x=8.0, y=8.0, z=12.0),
-            strength_mpa=AxisValues(x=90.0, y=90.0, z=None),
-            max_mass_g=60.0,
-        ),
-        modes=DesignModes(),
-        tolerance_pct=50.0,
-        n_results=3,
-    )
-
-    # Use ThreadPoolExecutor for test isolation to avoid multiprocessing spawn overhead in fast tests
-    with ThreadPoolExecutor(max_workers=2) as test_p_pool, ThreadPoolExecutor(max_workers=1) as test_t_pool:
-        await run_pipeline(
-            job_id=job_id,
-            request=request,
-            process_pool=test_p_pool,
-            thread_pool=test_t_pool,
-            k_values=[100, 300, 1000],
-        )
-
-    # Check job completed
+    request = DesignRequest(material="ti64", part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
+                            target=DesignTarget(stiffness_gpa=AxisValues(x=0.465, y=0.496, z=0.402),
+                                                strength_mpa=AxisValues(x=2.22, y=2.65, z=2.19), rel_density=0.05),
+                            modes=DesignModes(weight="about"))
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        await run_pipeline(job_id=job_id, request=request, thread_pool=pool)
     job = get_job(job_id)
-    assert job is not None
-    assert job["status"] == "done"
-    assert job["stage"] == "rank"
-
-    # Verify results saved
-    candidates = get_job_results(job_id)
-    assert len(candidates) == 3
-
-    # Collect SSE events
-    events = []
-    while not active_sse_queues[job_id].empty():
-        events.append(await active_sse_queues[job_id].get())
-
-    # Should not have escalated to 300 since k=100 met tolerance
-    escalation_messages = [e.get("message", "") for e in events if "Escalating to" in e.get("message", "")]
-    assert len(escalation_messages) == 0
+    assert job["status"] == "done" and len(job["rounds"]) == 1 and job["rounds"][0]["matched"]
+    cands = get_job_results(job_id)
+    assert len(cands) == 5 and cands[0]["matches_targets"] and cands[0]["mass_g"] > 0
 
 
 @pytest.mark.asyncio
-async def test_adaptive_escalation_escalates():
-    """Verify escalation through k_values when tolerance is strict (0.01%) and not met."""
+async def test_mock_replays_stored_run_that_needed_all_rounds_and_missed():
+    """Targets near sample_7 (K=1000, no match): the rounds are reported and candidates say 'not a match'."""
+    job_id = "j_replay_miss"
     init_db()
-    job_id = "j_test_escalation_tight"
     active_sse_queues[job_id] = asyncio.Queue()
-
-    # Very tight tolerance (0.001%) forces escalation through 100 -> 300
-    request = DesignRequest(
-        material="ti64",
-        part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
-        target=DesignTarget(
-            stiffness_gpa=AxisValues(x=4.0, y=4.0, z=6.0),
-            strength_mpa=AxisValues(x=90.0, y=90.0, z=None),
-            max_mass_g=60.0,
-        ),
-        modes=DesignModes(),
-        tolerance_pct=0.001,
-        n_results=3,
-    )
-
-    with ThreadPoolExecutor(max_workers=2) as test_p_pool, ThreadPoolExecutor(max_workers=1) as test_t_pool:
-        await run_pipeline(
-            job_id=job_id,
-            request=request,
-            process_pool=test_p_pool,
-            thread_pool=test_t_pool,
-            k_values=[50, 100],  # test with 2 escalation levels
-        )
-
-    events = []
-    while not active_sse_queues[job_id].empty():
-        events.append(await active_sse_queues[job_id].get())
-
-    # Check that escalation event was published
-    esc_events = [e for e in events if "Escalating to 100" in e.get("message", "")]
-    assert len(esc_events) >= 1
-    assert esc_events[0]["stage"] == "search"
-    assert esc_events[0]["progress"] > 0.0
+    request = DesignRequest(material="ti64", part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
+                            target=DesignTarget(stiffness_gpa=AxisValues(x=1.45, y=3.32, z=3.35),
+                                                strength_mpa=AxisValues(x=11.6, y=23.8, z=19.8), rel_density=0.25),
+                            modes=DesignModes(weight="about"))
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        await run_pipeline(job_id=job_id, request=request, thread_pool=pool)
+    job = get_job(job_id)
+    assert job["status"] == "done" and job["rounds"][-1]["k"] == 1000 and not job["rounds"][-1]["matched"]
+    cands = get_job_results(job_id)
+    assert cands and not cands[0]["matches_targets"] and any("not a match" in w for w in cands[0]["warnings"])

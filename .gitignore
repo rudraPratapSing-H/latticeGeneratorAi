@@ -16,3 +16,6 @@ r1_metrics.csv
 r3_metrics.csv
 runs/
 .pytest_cache/
+
+# real search output used by the mock server (copied from sample_*.json) stays tracked
+!mock/*.json

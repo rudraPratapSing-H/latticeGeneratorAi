@@ -12,7 +12,8 @@ from core.engine import K_LADDER
 
 from server import units
 from server.schemas import DesignRequest
-from server.store import save_results, update_job_status
+from server.finalize import finalize_candidates, rounds_info, sanitize
+from server.store import save_meta, save_results, update_job_status
 
 # Global dictionary mapping job_id to event queue for SSE streaming
 active_sse_queues: dict[str, asyncio.Queue] = {}
@@ -43,10 +44,23 @@ def drop_geometric_duplicates(candidates: list[dict[str, Any]]) -> list[dict[str
     return unique
 
 
+def dedupe_designs(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep the first of each distinct design. The engine's id hashes the adjacency AND the node positions, so two
+    lattices with the same edge list but different geometry stay apart; the same lattice at two densities too."""
+    seen: set[tuple[str, float]] = set()
+    out = []
+    for c in candidates:
+        key = (c["id"], round(float(c.get("rel_density", 0.0)), 5))
+        if key not in seen:
+            seen.add(key)
+            out.append(c)
+    return out
+
+
 def rank_candidates(candidates: list[dict[str, Any]], n: int) -> list[dict[str, Any]]:
     """Matches first, then lowest error; each distinct design once."""
     ordered = sorted(candidates, key=lambda c: (not c.get("matches_targets", False), c.get("match_error_pct", 1e9)))
-    top = drop_geometric_duplicates(ordered)[:n]
+    top = dedupe_designs(ordered)[:n]
     for i, cand in enumerate(top, start=1):
         cand["rank"] = i
     return top
@@ -97,9 +111,10 @@ async def run_pipeline(
 
         update_job_status(job_id=job_id, status="running", stage="rank", progress=0.95, message="Ranking top candidates...")
         top = rank_candidates(result["candidates"], request.n_results or 5)
-        for c in top:                      # ids are unique across jobs, so /api/designs/{id} finds exactly this design
-            c["id"] = f"{job_id}_{c['id']}"
-        save_results(job_id, top)
+        top = finalize_candidates(top, job_id, request, units.MATERIALS[request.material.lower()],
+                                  list(request.part.size_mm), request.part.cell_mm)
+        save_results(job_id, sanitize(top))
+        save_meta(job_id, sanitize({"rounds": rounds_info(result["rounds"]), "infeasible": result["infeasible"]}))
 
         matched = any(c.get("matches_targets") for c in top)
         if not top:
