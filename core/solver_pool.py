@@ -7,6 +7,7 @@ Worker count: WORKERS env var if set, else every core that is less than 50% busy
 """
 from __future__ import annotations
 
+import atexit
 import os
 import sys
 from concurrent.futures import ProcessPoolExecutor
@@ -33,11 +34,12 @@ def pick_workers() -> tuple[int, str]:
 
 
 def _init_worker() -> None:
-    try:                                               # solver workers yield to the API server, so /api/health stays fast
-        import psutil
-        psutil.Process().nice(psutil.BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 10)
-    except Exception:
-        pass
+    if os.environ.get("SOLVER_PRIORITY") != "normal":     # "normal" is a benchmark switch: the old behaviour
+        try:                                              # workers yield to the API server, so /api/health stays fast
+            import psutil
+            psutil.Process().nice(psutil.BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 10)
+        except Exception:
+            pass
     sys.path.insert(0, str(ROOT))
     import search_design  # noqa: F401  - also puts the solver folder on sys.path; imports numpy only
 
@@ -55,10 +57,21 @@ def solve_task(args):
         return None
 
 
+def shutdown(pool: ProcessPoolExecutor | None) -> None:
+    """Stop the workers now. Safe to call twice. Without this, a pool still alive at interpreter exit makes the
+    executor's weakref callback raise AttributeError ('NoneType' has no attribute 'util') while modules are torn down."""
+    if pool is not None:
+        try:
+            pool.shutdown(wait=True, cancel_futures=True)
+        except Exception:
+            pass
+
+
 def make_pool(n: int) -> ProcessPoolExecutor:
     # one BLAS thread per worker, otherwise n workers x n threads fight over the same cores
     for var in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
         os.environ[var] = "1"
     pool = ProcessPoolExecutor(max_workers=n, initializer=_init_worker)
     list(pool.map(ping, range(n * 2)))                  # start the workers now, not on the first request
+    atexit.register(shutdown, pool)                     # runs before modules are torn down
     return pool

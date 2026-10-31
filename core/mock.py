@@ -61,6 +61,9 @@ class MockEngine:
     status = {"ok": True, "reason": None, "device": "mock", "workers": 0}
     ok = True
 
+    def close(self) -> None:
+        return None
+
     def health(self) -> dict[str, Any]:
         return {"model_loaded": False, "gpu": False, "solver_workers": 0, "reason": "mock mode"}
 

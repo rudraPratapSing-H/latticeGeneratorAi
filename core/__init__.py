@@ -50,6 +50,13 @@ def start_engine() -> Any:
     return eng
 
 
+def shutdown() -> None:
+    """Stop the solver workers (server shutdown)."""
+    eng = _engine
+    if eng is not None and hasattr(eng, "close"):
+        eng.close()
+
+
 def health() -> dict[str, Any]:
     return get_engine().health()
 

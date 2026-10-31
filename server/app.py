@@ -89,6 +89,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     demo.install()                                  # stored demo targets, so the demo works without the GPU
     threading.Thread(target=core.start_engine, name="engine-warmup", daemon=True).start()
     yield
+    core.shutdown()
 
 
 app = FastAPI(
