@@ -1,6 +1,6 @@
 """Dataset picker: where does a target sit relative to the 900,000 solved lattices (300,000 x 3 densities)?
 
-numpy only (no torch). The table comes from scripts/build_reach_table.py (core/data/reach_table.npz).
+numpy only (no torch). The table comes from scripts/build_reach_table.py (core/tables/reach_table.npz).
 
 Levels: covered (within tolerance of a stored lattice), extended (to 25%), outside (beyond), infeasible (no beam
 lattice can do it: stiffnesses add up to more than 1.05 x density x E_s, or strength above the density's maximum).
@@ -15,7 +15,7 @@ from typing import Any
 
 import numpy as np
 
-DEFAULT_TABLE = Path(__file__).resolve().parent / "data" / "reach_table.npz"
+DEFAULT_TABLE = Path(__file__).resolve().parent / "tables" / "reach_table.npz"
 DENSITIES = (0.05, 0.15, 0.25)
 EXTENDED_LIMIT = 0.25          # 10% .. 25% from the nearest stored lattice
 INFEASIBLE_MARGIN = 1.05
