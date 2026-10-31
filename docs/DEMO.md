@@ -49,7 +49,7 @@ The same requests are in Bruno (`bruno/dataset/D1`-`D5`) and in `bruno/dataset_r
 A design demo, not a medical device: bone and load numbers are placeholders (`source: TODO` in `core/profiles/implant.py`).
 Needs the real backend (`.\scripts\dev.ps1`); in `-WebMock` mode the web app replays the recorded run (`mock/implant/`) instead.
 
-1. Open **Implant**. Upload `docs/review/test_stem.stl` (a generated 160 mm stem; `python scripts/make_test_stem.py` makes more).
+1. Open **Implant**. Make the sample stem with `python scripts/make_test_stem.py docs/review/test_stem.stl` (a generated 160 mm stem), then upload it.
    Type: *Right femoral hip stem for a 45 kg sedentary patient. Keep the neck solid.* Press **Upload & Analyze Mesh**.
 2. The mesh report says: closed, 1 body, 59 x 30 x 160 mm, units mm. The fields (45 kg, sedentary, "keep the neck solid") are read
    from the text: by Gemini when `GEMINI_API_KEY` is set (model: `GEMINI_MODEL`), otherwise by simple rules. Press **Confirm**.
