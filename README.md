@@ -97,6 +97,19 @@ python scripts/build_demo.py --count 5                                          
 python scripts/make_mock.py                                                             # mock/ from sample_*.json
 ```
 
+## Implant workflow (design demo, not a medical device)
+
+`POST /api/implants` (STL + description) -> `/confirm` (units, axis) -> `GET/PUT /zones` -> `POST /search` (one design job per lattice
+zone) -> `GET /zones/{z}/candidates` -> `POST /assemble` (queued job: tile, assemble, check, export) -> `GET /result`,
+`/export.stl`, `/report`. `POST /parse` reads a description again. The load model, bone targets and safety factor are placeholders
+(`core/profiles/implant.py`, every number `source: TODO`); nothing here is a clinical or regulatory claim. Every number in a result
+is labelled: `solver_verified_infinite_lattice` (the chosen cell, from the periodic beam solver), `beam_model_estimate` (finite
+block, `core/check.py`), `geometry_only` (mass, counts), `not_modelled` (plates, skin).
+Description parsing uses Gemini when `GEMINI_API_KEY` is set in the environment (`GEMINI_MODEL` picks the model; the key is sent
+in a header, never logged or stored) and falls back to offline rules on any failure. Run one full case on the real solver:
+`python scripts/run_implant_case.py`; check an exported STL: `python scripts/validate_implant_stl.py <file.stl>`.
+The web types come from the OpenAPI file: `npm run gen:api` in `lattice-web/`. `VITE_ENABLE_IMPLANT=false` removes the implant UI.
+
 ## API tests
 
 Needs Python 3.11. `pytest -q` runs the suite against the mock core (no GPU, about a minute). `pytest -q -m gpu` runs the checks

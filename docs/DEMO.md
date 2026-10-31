@@ -42,7 +42,29 @@ The same requests are in Bruno (`bruno/dataset/D1`-`D5`) and in `bruno/dataset_r
 7. Show the infeasible case: type stiffness 8 / 8 / 12 GPa with 60 g (the plan's example). The badge says *Infeasible*
    (stiffnesses add up to more than density x E_s), the app offers **Accept nearest** and **Run anyway**. Accept nearest keeps your
    numbers until you click; Run anyway sends `force: true` and returns the closest designs, labelled "Closest, not a match".
-8. Close: more materials, nonlinear checks, printed samples. (The implant workflow is a roadmap slide: its backend is not built.)
+8. Close: more materials, nonlinear checks, printed samples. The implant workflow below is a second, optional demo.
+
+## Implant demo path (optional, about 2 minutes, real backend)
+
+A design demo, not a medical device: bone and load numbers are placeholders (`source: TODO` in `core/profiles/implant.py`).
+Needs the real backend (`.\scripts\dev.ps1`); in `-WebMock` mode the web app replays the recorded run (`mock/implant/`) instead.
+
+1. Open **Implant**. Upload `docs/review/test_stem.stl` (a generated 160 mm stem; `python scripts/make_test_stem.py` makes more).
+   Type: *Right femoral hip stem for a 45 kg sedentary patient. Keep the neck solid.* Press **Upload & Analyze Mesh**.
+2. The mesh report says: closed, 1 body, 59 x 30 x 160 mm, units mm. The fields (45 kg, sedentary, "keep the neck solid") are read
+   from the text: by Gemini when `GEMINI_API_KEY` is set (model: `GEMINI_MODEL`), otherwise by simple rules. Press **Confirm**.
+3. Zones: tip, mid stem 1, mid stem 2, neck. Three are solid with the reason ("needs 169 MPa, above the most any lattice reaches,
+   76.1 MPa"); mid stem 2 is lattice (stress 41 MPa, 5.5 mm cell, covered by the dataset). Open *Load used for the design stress*:
+   every assumption names its source.
+4. **Search lattices for all zones**: one ordinary design job per lattice zone. Pick candidate #1, press **Assemble Implant**.
+5. Result: 4 zones, 393 g, 73,588 triangles, 3.7 MB STL. Each number carries a label: *Solver-verified (infinite lattice)* for the
+   chosen cell, *Beam-model estimate* for the finite block (12.4 GPa, 124% of the infinite lattice), *Geometry only* for mass.
+   **Download STL** and **Download report**. Check the STL: `python scripts/validate_implant_stl.py runs/implants/<id>/assemblies/<job>/implant.stl`
+   (expected: `"ok": true`, 2112 closed shells).
+
+Timings on the RTX 3050 6 GB laptop (first, cold run): upload and parse 0.7 s, confirm and zone table 1.4 s, zone search 20.4 s
+(one lattice zone), assembly with check and STL 1.1 s, download 0.05 s. A second identical run answers the search from the cache.
+With only a CPU the search takes minutes per zone; use `-Mock`/`-WebMock` and say the screens replay a recorded run.
 
 ## If the GPU misbehaves
 
