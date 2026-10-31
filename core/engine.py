@@ -19,7 +19,17 @@ from typing import Any, Callable
 from core import envcheck
 
 ROOT = Path(__file__).resolve().parent.parent
-K_LADDER = (100, 300, 1000)
+def _ladder_from_env() -> tuple[int, ...]:
+    """K_LADDER="300" or "100,300,1000" overrides the starting-point ladder (benchmarks); default 100, 300, 1000."""
+    raw = os.environ.get("K_LADDER", "")
+    try:
+        vals = tuple(int(x) for x in raw.replace(" ", "").split(",") if x)
+    except ValueError:
+        vals = ()
+    return vals if vals and all(v > 0 for v in vals) else (100, 300, 1000)
+
+
+K_LADDER = _ladder_from_env()
 DEFAULT_TIME_BUDGET_S = 120.0
 
 ProgressFn = Callable[[dict[str, Any]], None]
@@ -27,6 +37,10 @@ ProgressFn = Callable[[dict[str, Any]], None]
 
 class EngineUnavailable(RuntimeError):
     """Raised by run() when the engine did not load; the message says why and how to fix it."""
+
+
+def is_out_of_memory(e: BaseException) -> bool:
+    return "out of memory" in str(e).lower()
 
 
 def _failure(y, b, E_gpa: float, yield_mpa: float) -> dict[str, str]:
@@ -121,27 +135,96 @@ class Engine:
                       "message": f"No design meets every target. Escalating to {state['rungs'][row['round']]} candidates..."})
 
         t0 = time.time()
+        fallback = None
         with self._lock:                                   # one search at a time on the GPU
-            try:
-                cands, history = self._adaptive(sd, tg, rungs, budget, infeasible, on_round, log, should_stop,
-                                                solve_task, search_kwargs)
-            except RuntimeError as e:                      # CUDA out of memory: retry once with half the starts
-                if "out of memory" not in str(e).lower():
-                    raise
-                import torch
-                torch.cuda.empty_cache()
-                state.update(round=0, rungs=[max(10, k // 2) for k in rungs])
-                cands, history = self._adaptive(sd, tg, state["rungs"], budget, infeasible, on_round, log,
-                                                should_stop, solve_task, search_kwargs)
+            cands, history = self._run_with_memory_fallback(
+                sd, tg, state, budget, infeasible, on_round, log, should_stop, solve_task, search_kwargs)
+            if not cands and not (should_stop and should_stop()):
+                # the search produced no valid lattice at all: show the nearest STORED lattices, solver-verified
+                emit({"stage": "search", "round": state["round"], "k": None, "progress": 0.9,
+                      "message": "The search found no valid design; checking the nearest stored lattices..."})
+                cands = self._nearest_stored(sd, tg, spec, solve_task, search_kwargs)
+                fallback = "nearest_stored" if cands else None
         out = []
         for rank, c in enumerate(cands, 1):
             j = sd.to_candidate_json(c, tg, rank, spec["cell_mm"], spec.get("part_mm"))
             j["predicted"]["governing_failure"] = _failure(c["pred"]["y"], c["pred"]["b"], mat["E_gpa"], mat["yield_mpa"])
-            j["origin"] = c["origin"]
+            j["origin"] = "stored" if fallback else c["origin"]
             out.append(j)
         return {"material": sdm, "rounds": history, "infeasible": infeasible, "candidates": out, "request": echo,
-                "elapsed_seconds": round(time.time() - t0, 2),
+                "fallback": fallback, "elapsed_seconds": round(time.time() - t0, 2),
                 "stopped": bool(should_stop and should_stop())}
+
+    # ------------------------------------------------------------------ memory fallback and stored-lattice fallback
+    def _run_with_memory_fallback(self, sd, tg, state, budget, infeasible, on_round, log, should_stop, task_fn, extra):
+        """Full ladder; on CUDA out-of-memory retry with half the starts; if that fails too, move the models to the
+        CPU (slower) and retry once more. Any other error is raised."""
+        first = list(state["rungs"])
+        halved = [max(10, k // 2) for k in first]
+        plan = [("gpu", first), ("gpu", halved), ("cpu", halved)]
+        for attempt, (where, rungs) in enumerate(plan):
+            if where == "cpu" and str(self._s["device"]).startswith("cuda"):
+                self._to_cpu()
+            state.update(round=0, rungs=rungs, n=len(rungs))
+            try:
+                return self._adaptive(sd, tg, rungs, budget, infeasible, on_round, log, should_stop, task_fn, extra)
+            except RuntimeError as e:
+                if not is_out_of_memory(e) or attempt == len(plan) - 1:
+                    raise
+                self._release_gpu_memory()
+        raise AssertionError("unreachable")
+
+    def _release_gpu_memory(self) -> None:
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            pass
+
+    def _to_cpu(self) -> None:
+        """Move every model and tensor to the CPU and report the new device (health shows gpu: false)."""
+        s = self._s
+        for key in ("vae", "cmod"):
+            s[key] = s[key].to("cpu")
+        pred = s["pred"]
+        pred["net"] = pred["net"].to("cpu")
+        for key in ("x_mean", "x_std", "y_mean", "y_std"):
+            pred[key] = pred[key].to("cpu")
+        s["device"] = "cpu"
+        self.status = {**self.status, "device": "cpu"}
+        self._release_gpu_memory()
+
+    def _nearest_stored(self, sd, tg, spec, task_fn, extra) -> list[dict[str, Any]]:
+        """The stored lattices nearest to the target (picker distance), decoded and solver-verified through the same
+        run_search (no steering). Empty when the reach table or the stored ids are unavailable."""
+        try:
+            import numpy as np
+            from core import reach
+            s = self._s
+            ids_all = s.get("code_ids")
+            if ids_all is None:
+                return []
+            yld = spec.get("yield_strength_mpa")
+            ids, _density = reach.get_table().nearest_ids(
+                spec["material"], n=int(os.environ.get("FALLBACK_N", "20")), stiffness=spec.get("stiffness_gpa"),
+                strength=yld if yld is not None else spec.get("strength_mpa"), yield_only=yld is not None,
+                modes=spec["modes"], tol=spec["tol"], rho=spec.get("rho"), rho_max=spec.get("rho_max"))
+            pool_idx = np.flatnonzero(np.isin(ids_all, ids))
+            if len(pool_idx) == 0:
+                return []
+            kw = {k: v for k, v in (extra or {}).items() if k != "pool_idx"}
+            return sd.run_search(s["vae"], s["cmod"], s["pred"], s["mask"], s["codes"], tg, s["device"],
+                                 K=len(pool_idx), use_gradient=False, pool_idx=pool_idx, log=lambda *_: None,
+                                 executor=s.get("pool"), task_fn=task_fn, n_workers=s.get("workers", 1), **kw)
+        except Exception:
+            return []
+
+    def close(self) -> None:
+        """Stop the solver workers (also registered at exit)."""
+        from core import solver_pool
+        solver_pool.shutdown(self._s.pop("pool", None))
+        self.status = {**self.status, "workers": 0}
 
     def _adaptive(self, sd, tg, rungs, budget, infeasible, on_round, log, should_stop, task_fn, extra=None):
         s = self._s
@@ -172,12 +255,14 @@ def load_engine(model_dir: str | Path | None = None, device: str | None = None) 
         device = device or os.environ.get("DEVICE") or ("cuda:0" if torch.cuda.is_available() else "cpu")
         vae, cmod, mask = sd.load_models(str(model_dir / "results"), str(model_dir / "data"), device)
         pred = sd.load_predictor(str(model_dir / predictor), device)
-        codes = np.load(str(model_dir / "encoded_codes.npz"))["mu"]
+        stored = np.load(str(model_dir / "encoded_codes.npz"))
+        codes, code_ids = stored["mu"], stored["ids"]
         from core import solver_pool
         n, why = solver_pool.pick_workers()
         pool = solver_pool.make_pool(n) if n > 1 else None
         print(f"[pool] {why} -> {n} solver worker(s)", flush=True)
-        eng._s = dict(vae=vae, cmod=cmod, pred=pred, mask=mask, codes=codes, device=device, pool=pool, workers=n)
+        eng._s = dict(vae=vae, cmod=cmod, pred=pred, mask=mask, codes=codes, code_ids=code_ids, device=device,
+                      pool=pool, workers=n)
         eng.status = {"ok": True, "reason": None, "device": device, "workers": n}
     except BaseException as e:  # noqa: BLE001 - startup must not crash; health reports the reason
         eng.status = {"ok": False, "reason": f"{type(e).__name__}: {e}", "device": None, "workers": 0}

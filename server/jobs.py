@@ -119,6 +119,9 @@ def run_job_sync(job_id: str, request: DesignRequest, *, k_values: list[int] | N
         elif not top:
             status, msg = "failed", "No valid lattice found for this target (no_valid_design)."
             meta["failure_reason"] = "no_valid_design"
+        elif result.get("fallback") == "nearest_stored":
+            status, msg = "done", ("The search found no valid design; showing the nearest stored lattices "
+                                   "(solver-verified, not generated for this request).")
         elif matched:
             status, msg = "done", f"Found {sum(c.get('matches_targets', False) for c in top)} design(s) meeting every target."
         elif result["infeasible"]:

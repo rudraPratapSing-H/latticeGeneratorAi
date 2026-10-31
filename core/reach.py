@@ -218,6 +218,17 @@ class ReachTable:
             return "This target is far from every stored lattice; a match is unlikely. See the closest achievable target."
         return f"No lattice can reach this: {reason}. The closest achievable target is shown."
 
+    def nearest_ids(self, material: dict[str, Any], *, n: int = 20, **kw: Any) -> tuple[np.ndarray, float]:
+        """Lattice ids of the n stored lattices nearest to the request at the density check() picks, and that density.
+        Nearest = smallest mode-aware distance, ties broken by the two-sided distance."""
+        res = self.check(material, **kw)
+        i = int(np.argmin([abs(d - res["density"]) for d in self.densities]))
+        modes = {"stiffness": "about", "strength": "at_least", "weight": "at_most", **(kw.get("modes") or {})}
+        dist, dist2 = self._distance(material, i, kw.get("stiffness"), kw.get("strength"),
+                                     bool(kw.get("yield_only")), modes, kw.get("tol", 0.10))
+        order = np.lexsort((dist2, dist))[:n]
+        return self.ids[i][order].astype(np.int64), self.densities[i]
+
     def snap(self, material: dict[str, Any], **kw: Any) -> dict[str, Any]:
         """The six values of the nearest stored lattice at the chosen density, and how far they moved."""
         r = self.check(material, **kw)

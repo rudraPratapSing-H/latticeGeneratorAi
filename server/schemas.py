@@ -224,6 +224,7 @@ class Candidate(BaseModel):
     lattice: LatticeSpec = Field(..., description="Lattice structural geometry")
     predicted: PropertyEvaluation = Field(..., description="Properties predicted by the ML surrogate model")
     verified: PropertyEvaluation | None = Field(default=None, description="Properties verified by the physics solver")
+    source: str | None = Field(default=None, description="generated (made by the search) or nearest_stored (a lattice from the dataset)")
     mass_estimate: bool = Field(default=True, description="mass_g is density x part volume x material density")
     warnings: list[str] = Field(default_factory=list, description="Plain-language notes (printability, shortfall)")
 

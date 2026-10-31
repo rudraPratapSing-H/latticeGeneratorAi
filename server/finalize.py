@@ -76,9 +76,14 @@ def finalize_candidates(cands: list[dict[str, Any]], job_id: str, request: Any, 
         c["lattice"] = lat
         c["mass_g"] = mass_g(c["rel_density"], part_mm, material)
         c["mass_estimate"] = True
+        stored = c.pop("origin", None) == "stored"
+        c["source"] = "nearest_stored" if stored else "generated"
         w = [x for x in (printability_warning(lat), shortfall_warning(c, None)) if x]
+        if stored:
+            w.insert(0, "Nearest stored lattice from the dataset (the search found no valid design for this target): "
+                        "solver-verified, but not made for your request." +
+                        ("" if c.get("matches_targets") else " Not a match."))
         c["warnings"] = w
-        c.pop("origin", None)
         out.append(c)
     return out
 
