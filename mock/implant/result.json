@@ -1,0 +1,402 @@
+{
+  "implant_id": "i_48442fc4",
+  "disclaimer": "Design demo, not a medical device. Bone and load numbers are placeholders (source: TODO); nothing here is a clinical, safety or regulatory claim.",
+  "zones": [
+    {
+      "id": "z1",
+      "name": "tip",
+      "range_mm": [
+        0.0,
+        44.0
+      ],
+      "kind": "solid",
+      "stress_mpa": 169.49527951073276,
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 12.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the tip (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 169.49527951073276,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        }
+      },
+      "candidate_id": null,
+      "verified": null,
+      "check": null,
+      "geometry": {
+        "cells": 0,
+        "struts": 0,
+        "run_volume_mm3": 34001.2889138787
+      }
+    },
+    {
+      "id": "z2",
+      "name": "mid stem 1",
+      "range_mm": [
+        44.0,
+        71.5
+      ],
+      "kind": "solid",
+      "stress_mpa": 81.13779822585121,
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 10.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the mid stem (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 81.13779822585121,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        }
+      },
+      "candidate_id": null,
+      "verified": null,
+      "check": null,
+      "geometry": {
+        "cells": 0,
+        "struts": 0,
+        "run_volume_mm3": 34001.2889138787
+      }
+    },
+    {
+      "id": "z3",
+      "name": "mid stem 2",
+      "range_mm": [
+        71.5,
+        93.5
+      ],
+      "kind": "lattice",
+      "stress_mpa": 41.17797548183073,
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 10.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the mid stem (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 41.17797548183073,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        }
+      },
+      "candidate_id": "j_1fe70241_d_a4635870",
+      "verified": {
+        "stiffness_gpa": {
+          "x": 2.8401,
+          "y": 6.2882,
+          "z": 9.996
+        },
+        "strength_mpa": {
+          "x": 21.924,
+          "y": 39.981,
+          "z": 53.331
+        },
+        "rel_density": 0.25,
+        "label": "solver_verified_infinite_lattice"
+      },
+      "check": {
+        "label": "beam_model_estimate",
+        "stiffness_z_gpa": 12.438164299104491,
+        "infinite_lattice_z_gpa": 9.996586564448867,
+        "ratio_to_infinite": 1.2442411436058258,
+        "block_cells": [
+          5,
+          5,
+          4
+        ],
+        "zone_cells": [
+          11,
+          6,
+          4
+        ],
+        "struts": 4816,
+        "representative": true,
+        "candidate_verified_z_gpa": 9.996,
+        "note": "Finite block with both ends welded to rigid plates, beam elements from the solver's own element code. An estimate, not a solver-verified number. A block of the zone, not the whole zone."
+      },
+      "geometry": {
+        "cells": 40,
+        "struts": 2108,
+        "grid_cells": [
+          11,
+          6,
+          4
+        ],
+        "strut_radius_mm": 0.48978,
+        "strut_length_mm": 2906.1749118169855,
+        "strut_volume_mm3": 2190.1492725633007,
+        "rel_density": 0.25,
+        "components": 1,
+        "removed_fragments": 0,
+        "main_share": 1.0,
+        "min_diameter_mm": 0.97956,
+        "printable": true
+      }
+    },
+    {
+      "id": "z4",
+      "name": "neck",
+      "range_mm": [
+        93.5,
+        160.0
+      ],
+      "kind": "solid",
+      "stress_mpa": 19.053103642715456,
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 4.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the neck (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic"
+          },
+          "y": {
+            "value": null,
+            "source": "automatic"
+          },
+          "z": {
+            "value": 19.053103642715456,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        }
+      },
+      "candidate_id": null,
+      "verified": null,
+      "check": null,
+      "geometry": {
+        "cells": 0,
+        "struts": 0,
+        "run_volume_mm3": 52118.77634648094
+      }
+    }
+  ],
+  "load": {
+    "cases": [
+      {
+        "name": "walking",
+        "force_n": 1112.454,
+        "angle_deg": 20.0
+      },
+      {
+        "name": "stumble",
+        "force_n": 2966.544,
+        "angle_deg": 25.0
+      }
+    ],
+    "governing": {
+      "name": "stumble",
+      "force_n": 2966.544,
+      "angle_deg": 25.0
+    },
+    "safety_factor": 1.5,
+    "supported_weight_kg": 37.8,
+    "assumptions": [
+      {
+        "name": "body weight",
+        "value": 45.0,
+        "unit": "kg",
+        "source": "description"
+      },
+      {
+        "name": "weight carried by the supporting leg itself",
+        "value": 0.16,
+        "unit": "of body weight",
+        "source": "placeholder",
+        "todo": true
+      },
+      {
+        "name": "activity",
+        "value": "sedentary",
+        "unit": "",
+        "source": "description"
+      },
+      {
+        "name": "design cases",
+        "value": "walking, stumble",
+        "unit": "",
+        "source": "placeholder",
+        "todo": true
+      },
+      {
+        "name": "safety factor",
+        "value": 1.5,
+        "unit": "",
+        "source": "placeholder",
+        "todo": true
+      }
+    ]
+  },
+  "summary": {
+    "length_mm": 160.0,
+    "cell_mm": 5.5,
+    "interface_mm": 0.6,
+    "sides": 8,
+    "triangles": 73588,
+    "volume_mm3": 88820.23353537527,
+    "mass_g": 393.4736345617124,
+    "lattice_share_pct": 2.22002019857674,
+    "stl_bytes": 3679484,
+    "mass_label": "geometry_only"
+  },
+  "notes": [],
+  "warnings": [],
+  "parts": [
+    {
+      "name": "lattice mid stem 2",
+      "kind": "lattice",
+      "zone_ids": [
+        "z3"
+      ],
+      "triangles": 67456,
+      "watertight": true,
+      "volume_mm3": 1971.827124908362
+    },
+    {
+      "name": "solid tip, mid stem 1",
+      "kind": "solid",
+      "zone_ids": [
+        "z1",
+        "z2"
+      ],
+      "triangles": 2782,
+      "watertight": true,
+      "volume_mm3": 34001.2889138787
+    },
+    {
+      "name": "solid neck",
+      "kind": "solid",
+      "zone_ids": [
+        "z4"
+      ],
+      "triangles": 2590,
+      "watertight": true,
+      "volume_mm3": 52118.77634648094
+    },
+    {
+      "name": "interface at 72 mm",
+      "kind": "interface",
+      "zone_ids": [
+        "z1",
+        "z3"
+      ],
+      "triangles": 380,
+      "watertight": true,
+      "volume_mm3": 341.50463467358674
+    },
+    {
+      "name": "interface at 94 mm",
+      "kind": "interface",
+      "zone_ids": [
+        "z3",
+        "z4"
+      ],
+      "triangles": 380,
+      "watertight": true,
+      "volume_mm3": 386.8365154336763
+    }
+  ],
+  "verification": {
+    "solver_verified_infinite_lattice": "Stiffness and strength of each lattice zone's chosen cell, from the periodic beam solver (an infinite lattice).",
+    "beam_model_estimate": "Stiffness of a finite block of the zone with welded end plates, from a small beam model that reuses the solver's element code. An estimate.",
+    "geometry_only": "Mass, volume, strut and triangle counts, measured on the meshes. Not a solver result.",
+    "not_modelled": "Interface plates, the skin and anything outside the zones are not part of any stiffness or strength number."
+  }
+}

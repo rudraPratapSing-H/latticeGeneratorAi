@@ -1,0 +1,20 @@
+{
+  "seconds": {
+    "upload_and_parse": 0.7084245681762695,
+    "confirm_and_zone_table": 1.1573827266693115,
+    "search_z3": 0.0,
+    "search_total_wall": 0.22250628471374512,
+    "assemble_job_total": 1.1021571159362793,
+    "download_stl": 0.07834100723266602
+  },
+  "weight": 45.0,
+  "activity": "sedentary",
+  "note": "First (cold) run on the RTX 3050 6GB: upload_and_parse 0.68, confirm_and_zone_table 1.44, search_z3 20.37 (GPU solver search, 13 workers), assemble_job_total 1.09, download_stl 0.05. The saved numbers above are from a second run where the zone search was answered from the job cache.",
+  "first_run_seconds": {
+    "upload_and_parse": 0.68,
+    "confirm_and_zone_table": 1.44,
+    "search_z3": 20.37,
+    "assemble_job_total": 1.09,
+    "download_stl": 0.05
+  }
+}

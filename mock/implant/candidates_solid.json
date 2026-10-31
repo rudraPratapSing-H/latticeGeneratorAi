@@ -1,0 +1,8 @@
+{
+  "zone_id": "z1",
+  "kind": "solid",
+  "reason": "The strength this zone needs (169 MPa, with the safety factor) is above the most any lattice in the dataset reaches for this material (76.1 MPa), so it is solid.",
+  "candidates": [],
+  "grid": null,
+  "job": null
+}

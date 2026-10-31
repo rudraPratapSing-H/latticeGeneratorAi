@@ -28,3 +28,5 @@ runs_review/
 
 # local settings (copy .env.example to .env)
 .env
+mock/implant/*.stl
+mock/implant/*.shells.json

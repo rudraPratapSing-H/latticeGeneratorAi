@@ -174,6 +174,14 @@ def build_zone_table(slices: list[zoning.Slice], stress: list[dict[str, float]],
         zn["cells"] = max(0, int(math.floor((zn["range_mm"][1] - zn["range_mm"][0]) / cell + 1e-6)))
         evaluate_zone(table, material, zn)
     zones = [{k: v for k, v in z.items() if k not in ("edit", "forced_kind", "forced_reason")} for z in zones]
+    seen: dict[str, int] = {}
+    for zn in zones:                       # two zones in the same bone region get a number, so every name is unique
+        seen[zn["name"]] = seen.get(zn["name"], 0) + 1
+    count: dict[str, int] = {}
+    for zn in zones:
+        if seen[zn["name"]] > 1:
+            count[zn["name"]] = count.get(zn["name"], 0) + 1
+            zn["name"] = f"{zn['name']} {count[zn['name']]}"
 
     # neighbouring stiffness ratio
     ratio = profile.GEOMETRY["stiffness_ratio_warn"]["value"]
