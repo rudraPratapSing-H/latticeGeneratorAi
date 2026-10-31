@@ -12,3 +12,5 @@ httpx>=0.27.0
 pytest>=8.0.0
 pytest-asyncio>=0.24.0
 psutil
+trimesh>=4.4,<5          # implant meshes (Phase B); no triangulation extras needed, shapely does that
+shapely>=2.0.4
