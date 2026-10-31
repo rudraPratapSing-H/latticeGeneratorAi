@@ -443,14 +443,17 @@ def run_search(vae, cmod, pred, mask, codes, tg, device, K=100, steps=100, lr=0.
 
 
 def search_adaptive(vae, cmod, pred, mask, codes, tg, device, ladder=(100, 300, 1000), time_budget=60.0,
-                    min_gain=0.005, infeasible=False, on_round=None, log=None, **kw):
+                    min_gain=0.005, infeasible=False, on_round=None, log=None, should_stop=None, **kw):
     """start with few starting points; if no design meets every target, search again with more.
     stops when a design matches, when a round gains less than `min_gain` (0.005 = half a point of worst-axis error),
     when the next round would exceed the time budget, or at the end of the ladder. solver results are reused between rounds.
-    returns (candidates, history); `on_round(history_row, candidates)` is called after every round (for progress display)."""
+    returns (candidates, history); `on_round(history_row, candidates)` is called after every round (for progress display).
+    `should_stop()` (optional) is checked between rounds; when it returns True the best result so far is returned."""
     cache, history, best, t0 = {}, [], None, time.time()
     steps_ = list(ladder)[:1] if infeasible else list(ladder)
     for r, K in enumerate(steps_):
+        if should_stop is not None and should_stop():
+            break
         t1 = time.time()
         if log:
             log(f"  [round {r + 1}: K={K}]")
@@ -472,7 +475,7 @@ def search_adaptive(vae, cmod, pred, mask, codes, tg, device, ladder=(100, 300, 
             per_start = (time.time() - t1) / K
             if (time.time() - t0) + per_start * steps_[r + 1] > time_budget:
                 break
-    return best[1], history
+    return (best[1] if best is not None else []), history
 
 
 # ------------------------------------------------------------------ output

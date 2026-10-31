@@ -245,3 +245,76 @@ def denormalize_targets(
         "stiffness_gpa": stiffness_gpa,
         "strength_mpa": strength_mpa,
     }
+
+
+# ---------------------------------------------------------------------------
+# Search spec: the physical request in the form the engine takes
+# ---------------------------------------------------------------------------
+
+MATERIALS: dict[str, dict[str, Any]] = {
+    "ti64": {"id": "ti64", "name": "Ti-6Al-4V", "E_gpa": 114.0, "yield_mpa": 880.0, "density_g_cm3": 4.43},
+}
+RHO_MIN, RHO_MAX = 0.05, 0.25          # relative densities the predictor was trained on (0.05 / 0.15 / 0.25)
+INFEASIBLE_MARGIN = 1.05               # the limit is approximate; a plain cubic lattice sits exactly on it
+
+
+def strength_ratio(material: dict[str, Any]) -> float:
+    """E_s / sigma_y with both in MPa (129.5 for Ti-6Al-4V). Solver buckling is relative to E_s, yield to sigma_y."""
+    E_gpa, yield_mpa, _ = _extract_material_properties(material)
+    return E_gpa * 1000.0 / yield_mpa
+
+
+def effective_strength(yield_rel: float, buckling_rel: float, material: dict[str, Any]) -> float:
+    """Effective strength in units of sigma_y: min(yield, (E_s / sigma_y) x buckling)."""
+    return min(yield_rel, strength_ratio(material) * buckling_rel)
+
+
+def _axis_list(v: Any) -> list[float | None] | None:
+    """AxisValues / dict -> [x, y, z] (None for an ignored axis), or None when every axis is ignored."""
+    if v is None:
+        return None
+    vals = [v.get(a) for a in "xyz"] if isinstance(v, dict) else [getattr(v, a) for a in "xyz"]
+    return None if all(x is None for x in vals) else vals
+
+
+def weight_limit_density(request: DesignRequest, material: dict[str, Any]) -> float | None:
+    """The relative density the user asked for: rel_density if given, else from the mass limit; None if neither."""
+    t = request.target
+    if t.rel_density is not None:
+        return t.rel_density
+    return mass_to_relative_density(t.max_mass_g, calculate_volume_cm3(request.part.size_mm),
+                                    _extract_material_properties(material)[2])
+
+
+def is_infeasible(spec: dict[str, Any]) -> bool:
+    """The three stiffnesses cannot add up to more than density x E_s (the plain cubic lattice sits exactly on it)."""
+    stiff = spec.get("stiffness_gpa")
+    rho_top = spec["rho"] if spec.get("rho") is not None else (spec.get("rho_max") or RHO_MAX)
+    return bool(stiff and None not in stiff and sum(stiff) > INFEASIBLE_MARGIN * rho_top * spec["material"]["E_gpa"])
+
+
+def to_search_spec(request: DesignRequest, material: dict[str, Any]) -> dict[str, Any]:
+    """Physical request -> plain dict for core.engine (weight becomes a relative density, modes become strings)."""
+    t = request.target
+    mode = lambda m: getattr(m, "value", m)  # noqa: E731
+    weight_mode = mode(request.modes.weight)
+    rho_lim = weight_limit_density(request, material)
+    rho = rho_max = None
+    if rho_lim is not None:
+        if weight_mode == "about":
+            rho = rho_lim
+        else:
+            rho_max = rho_lim
+    return {
+        "material": material,
+        "stiffness_gpa": _axis_list(t.stiffness_gpa),
+        "strength_mpa": None if t.yield_strength_mpa else _axis_list(t.strength_mpa),
+        "yield_strength_mpa": _axis_list(t.yield_strength_mpa),
+        "rho": rho,
+        "rho_max": rho_max,
+        "modes": {"stiffness": mode(request.modes.stiffness), "strength": mode(request.modes.strength),
+                  "weight": weight_mode},
+        "tol": request.tolerance_pct / 100.0,
+        "cell_mm": request.part.cell_mm,
+        "part_mm": list(request.part.size_mm),
+    }

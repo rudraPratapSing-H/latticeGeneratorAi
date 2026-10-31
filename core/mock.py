@@ -251,20 +251,8 @@ def _calculate_match_error(
 
 
 # ---------------------------------------------------------------------------
-# Same interface as the real core (core/__init__.py), used when MOCK=1 and in tests
+# Same interface as core.engine (used when MOCK=1 and in tests). Replaced by real-output replay in T4.
 # ---------------------------------------------------------------------------
-
-def load_models() -> None:
-    return None
-
-
-def is_loaded() -> bool:
-    return False
-
-
-def health() -> dict[str, Any]:
-    return {"model_loaded": False, "gpu": False}
-
 
 def search_round(spec: dict[str, Any], K: int, cache: dict | None = None) -> list[dict[str, Any]]:
     """Canned round: search K fake candidates, verify their 3 states, keep the best state of each."""
@@ -286,3 +274,41 @@ def search_round(spec: dict[str, Any], K: int, cache: dict | None = None) -> lis
 
 def _axes(v: Any) -> dict[str, float | None] | None:
     return None if v is None else dict(zip("xyz", v))
+
+
+class MockEngine:
+    status = {"ok": True, "reason": None, "device": "mock", "workers": 0}
+    ok = True
+
+    def health(self) -> dict[str, Any]:
+        return {"model_loaded": False, "gpu": False, "solver_workers": 0, "reason": "mock mode"}
+
+    def run(self, request: Any, on_progress=None, should_stop=None, *, ladder=(100, 300, 1000),
+            time_budget_s=None, request_echo=None) -> dict[str, Any]:
+        from server import units
+        emit = on_progress or (lambda _e: None)
+        spec = request if isinstance(request, dict) else units.to_search_spec(request, units.MATERIALS[request.material.lower()])
+        infeasible = units.is_infeasible(spec)
+        rungs = list(ladder)[:1] if infeasible else list(ladder)
+        history, found = [], []
+        for r, k in enumerate(rungs, 1):
+            if should_stop and should_stop():
+                break
+            emit({"stage": "search", "round": r, "k": k, "progress": round(0.9 * (r - 1) / len(rungs) + 0.02, 3),
+                  "message": f"Round {r} of up to {len(rungs)}: searching {k} starting lattices"})
+            cands = search_round(spec, k)
+            emit({"stage": "repair", "round": r, "k": k, "progress": round(0.9 * (r - 0.5) / len(rungs), 3),
+                  "message": f"Round {r}: merged duplicates, {len(cands)} distinct lattices"})
+            found = cands if not found or cands[0]["match_error_pct"] < found[0]["match_error_pct"] else found
+            row = dict(round=r, K=k, best_err=cands[0]["match_error_pct"] / 100.0, matched=bool(cands[0]["matches_targets"]),
+                       n_candidates=len(cands), round_seconds=0.0, elapsed_seconds=0.0)
+            history.append(row)
+            emit({"stage": "verify", "round": r, "k": k, "row": row,
+                  "progress": round(0.9 * r / len(rungs), 3), "message": f"Round {r} done"})
+            if row["matched"]:
+                break
+            if r < len(rungs):
+                emit({"stage": "search", "round": r, "k": rungs[r], "progress": round(0.9 * r / len(rungs), 3),
+                      "message": f"No design meets every target. Escalating to {rungs[r]} candidates..."})
+        return {"material": spec["material"], "rounds": history, "infeasible": infeasible,
+                "candidates": found, "request": request_echo, "stopped": bool(should_stop and should_stop())}

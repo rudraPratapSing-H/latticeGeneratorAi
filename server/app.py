@@ -61,8 +61,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan context initializing SQLite on startup and cleaning up pools."""
     init_db()
     fail_stale_jobs()
-    if not core.MOCK:
-        asyncio.get_running_loop().run_in_executor(thread_pool, core.load_models)   # warm up without blocking startup
+    asyncio.get_running_loop().run_in_executor(thread_pool, core.start_engine)   # warm up without blocking startup
     yield
     process_pool.shutdown(wait=False)
     thread_pool.shutdown(wait=False)
