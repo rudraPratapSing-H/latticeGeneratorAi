@@ -1,0 +1,57 @@
+meta {
+  name: D2 medium, nearly isotropic
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 1.15,
+        "y": 1.24,
+        "z": 1.24
+      },
+      "strength_mpa": {
+        "x": 8.1,
+        "y": 8.81,
+        "z": 8.23
+      },
+      "max_mass_g": 43.4
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  Taken from dataset lattice 439738 (rho 0.15, not in the 100k the predictor trained on): its stiffness, 95% of its strength, mass cap = its mass + 2%. A design must exist, so this should match. Then GET /api/jobs/{{jobId}} until done.
+}

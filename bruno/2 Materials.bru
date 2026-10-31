@@ -1,0 +1,15 @@
+meta {
+  name: 2 Materials
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/materials
+  body: none
+  auth: none
+}
+
+tests {
+  test("has ti64", function() { expect(res.body.map(m => m.id)).to.include("ti64"); });
+}

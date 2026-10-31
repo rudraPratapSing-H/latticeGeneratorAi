@@ -1,0 +1,26 @@
+meta {
+  name: 4 Get job (run until done)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/jobs/{{jobId}}
+  body: none
+  auth: none
+}
+
+script:post-response {
+  if (res.body.status === "done" && res.body.candidates.length) { bru.setVar("designId", res.body.candidates[0].id); }
+}
+
+tests {
+  test("200", function() { expect(res.status).to.equal(200); });
+  test("candidates are solver-verified when done", function() {
+    if (res.body.status === "done") { expect(res.body.candidates.length).to.be.above(0); expect(res.body.candidates[0].verified).to.not.equal(null); }
+  });
+}
+
+docs {
+  Send repeatedly until status is done or failed. Saves the top candidate id as {{designId}}. The response also echoes the request.
+}

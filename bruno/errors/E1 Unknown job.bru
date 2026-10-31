@@ -1,0 +1,15 @@
+meta {
+  name: E1 Unknown job
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/jobs/j_nope
+  body: none
+  auth: none
+}
+
+tests {
+  test("404", function() { expect(res.status).to.equal(404); });
+}

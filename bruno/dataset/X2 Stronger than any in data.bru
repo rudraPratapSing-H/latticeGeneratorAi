@@ -1,0 +1,52 @@
+meta {
+  name: X2 Stronger than any in data
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "strength_mpa": {
+        "x": 120,
+        "y": 120,
+        "z": 120
+      },
+      "max_mass_g": 72.3
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  120 MPa is above the dataset maximum (76 MPa). Expect no match.
+}

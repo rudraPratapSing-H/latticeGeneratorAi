@@ -1,0 +1,45 @@
+meta {
+  name: 8 Create design (impossible)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 20,
+        "y": 20,
+        "z": 20
+      },
+      "max_mass_g": 60
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  20+20+20 GPa at 60 g is above rho x E. After it finishes the message should say it cannot be met at this density, with one search round only.
+}

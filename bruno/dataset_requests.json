@@ -1,0 +1,290 @@
+[
+  {
+    "label": "light, nearly isotropic",
+    "source_lattice_id": 127308,
+    "source_rho": 0.05,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 0.328,
+          "y": 0.351,
+          "z": 0.335
+        },
+        "strength_mpa": {
+          "x": 3.83,
+          "y": 3.07,
+          "z": 3.45
+        },
+        "max_mass_g": 14.5
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "medium, nearly isotropic",
+    "source_lattice_id": 439738,
+    "source_rho": 0.15,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 1.15,
+          "y": 1.24,
+          "z": 1.24
+        },
+        "strength_mpa": {
+          "x": 8.1,
+          "y": 8.81,
+          "z": 8.23
+        },
+        "max_mass_g": 43.4
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "dense, nearly isotropic",
+    "source_lattice_id": 796798,
+    "source_rho": 0.25,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 1.9,
+          "y": 2.38,
+          "z": 2.42
+        },
+        "strength_mpa": {
+          "x": 12.5,
+          "y": 15.8,
+          "z": 13.4
+        },
+        "max_mass_g": 72.3
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "medium, much stiffer in z",
+    "source_lattice_id": 740194,
+    "source_rho": 0.15,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 0.578,
+          "y": 0.595,
+          "z": 1.64
+        },
+        "strength_mpa": {
+          "x": 3.41,
+          "y": 2.31,
+          "z": 11.5
+        },
+        "max_mass_g": 43.4
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "medium, much stiffer in x",
+    "source_lattice_id": 121587,
+    "source_rho": 0.15,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 1.62,
+          "y": 0.306,
+          "z": 0.509
+        },
+        "strength_mpa": {
+          "x": 7.51,
+          "y": 2.06,
+          "z": 2.93
+        },
+        "max_mass_g": 43.4
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "dense, strongly anisotropic",
+    "source_lattice_id": 612133,
+    "source_rho": 0.25,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 4.01,
+          "y": 0.95,
+          "z": 4.02
+        },
+        "strength_mpa": {
+          "x": 14.3,
+          "y": 6.21,
+          "z": 17.1
+        },
+        "max_mass_g": 72.3
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "light, anisotropic",
+    "source_lattice_id": 849679,
+    "source_rho": 0.05,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 0.688,
+          "y": 0.42,
+          "z": 0.219
+        },
+        "strength_mpa": {
+          "x": 2.83,
+          "y": 2.58,
+          "z": 1.29
+        },
+        "max_mass_g": 14.5
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  },
+  {
+    "label": "medium, near the stiffest in the data",
+    "source_lattice_id": 467320,
+    "source_rho": 0.15,
+    "body": {
+      "material": "ti64",
+      "part": {
+        "size_mm": [
+          40,
+          40,
+          40
+        ],
+        "cell_mm": 10
+      },
+      "target": {
+        "stiffness_gpa": {
+          "x": 3.22,
+          "y": 2.17,
+          "z": 2.15
+        },
+        "strength_mpa": {
+          "x": 15.0,
+          "y": 11.6,
+          "z": 11.5
+        },
+        "max_mass_g": 43.4
+      },
+      "modes": {
+        "stiffness": "about",
+        "strength": "at_least",
+        "weight": "at_most"
+      },
+      "tolerance_pct": 10,
+      "n_results": 5
+    }
+  }
+]

@@ -1,0 +1,57 @@
+meta {
+  name: 3 Create design
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 8,
+        "y": 8,
+        "z": 12
+      },
+      "strength_mpa": {
+        "x": 20,
+        "y": 20,
+        "z": 30
+      },
+      "max_mass_g": 150
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202 and job id", function() { expect(res.status).to.equal(202); expect(res.body.job_id).to.match(/^j_/); });
+}
+
+docs {
+  Starts a search. Saves job_id as {{jobId}} for the next requests. Real mode takes ~10-20 s (up to ~2 min if it escalates).
+}

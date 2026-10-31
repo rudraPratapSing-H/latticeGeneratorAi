@@ -273,7 +273,7 @@ def solver_errors(tg, res):
 # ------------------------------------------------------------------ the search
 def run_search(vae, cmod, pred, mask, codes, tg, device, K=100, steps=100, lr=0.002, noise=0.0, rho_lo=0.05,
                rho_hi=0.25, n_grid=9, light=0.02, seed=0, use_gradient=True, random_start=False, workers=1,
-               pool_idx=None, log=print, cache=None):
+               pool_idx=None, log=print, cache=None, executor=None, task_fn=None, n_workers=1):
     """returns a list of candidate dicts sorted best first. `cache` (a dict) remembers solver results between calls."""
     import torch
     if cache is None:
@@ -360,6 +360,32 @@ def run_search(vae, cmod, pred, mask, codes, tg, device, K=100, steps=100, lr=0.
     log(f"  decode: {len(lat)} lattices ({time.time() - t1:.1f}s)")
 
     # ---- 4. verify with the solver; refine density on a small grid when weight is only a limit ----
+    if executor is not None and task_fn is not None:
+        # solve every distinct (lattice, density) that is not cached yet on all workers at once; the loop below
+        # then finds every result in the cache
+        todo, pseen = {}, set()
+        for i, (adj, pos) in enumerate(lat):
+            if adj.sum() == 0:
+                continue
+            key = hashlib.md5(adj.astype(np.int8).tobytes() + np.round(pos, 3).tobytes()).hexdigest()
+            if key in pseen:
+                continue
+            pseen.add(key)
+            rhos = [float(rho_fixed)] if not free_density else \
+                sorted(set(np.round(np.exp(np.linspace(np.log(lo), np.log(hi), n_grid)).tolist() + [float(rho_fin[i])], 5)))
+            for rr in rhos:
+                if (key, rr) not in cache and (key, rr) not in todo:
+                    todo[(key, rr)] = (adj, pos, rr)
+        if todo:
+            ts = time.time()
+            keys = list(todo)
+            try:
+                outs = list(executor.map(task_fn, [todo[k] for k in keys], chunksize=max(1, len(keys) // (6 * max(1, n_workers)))))
+                for k, o in zip(keys, outs):
+                    cache[k] = o
+                log(f"  solver: {len(keys)} solves on {n_workers} workers ({time.time() - ts:.1f}s)")
+            except Exception as e:                       # broken pool: the loop below solves serially instead
+                log(f"  solver pool failed ({e!r}); solving on one core")
     seen, cands, bad = set(), [], 0
     for i, (adj, pos) in enumerate(lat):
         if adj.sum() == 0:
@@ -458,7 +484,7 @@ def to_candidate_json(c, tg, rank, cell_mm, part_mm):
     P = c["pred"]
     E_mpa = tg.mat["E_gpa"] * 1000
     out = dict(
-        id="d_" + hashlib.md5(c["adj"].astype(np.int8).tobytes() + np.round(c["pos"], 3).tobytes()).hexdigest()[:8], rank=rank, match_error_pct=round(100 * c["max_err"], 2),
+        id="d_" + hashlib.md5(c["adj"].astype(np.int8).tobytes() + np.round(c["pos"], 3).tobytes() + np.float64(round(rho, 5)).tobytes()).hexdigest()[:8], rank=rank, match_error_pct=round(100 * c["max_err"], 2),
         matches_targets=bool(c["match"]), rel_density=round(rho, 5),
         lattice=dict(format="octant27", nodes=nodes.tolist(), edges=edges, cell_size_mm=cell_mm,
                      strut_radius_mm=round(res["r_cell"] * cell_mm / 2.0, 5)),

@@ -1,0 +1,15 @@
+meta {
+  name: E3 Unknown design
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/designs/does_not_exist
+  body: none
+  auth: none
+}
+
+tests {
+  test("404", function() { expect(res.status).to.equal(404); });
+}

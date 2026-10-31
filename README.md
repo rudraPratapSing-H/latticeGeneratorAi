@@ -53,3 +53,21 @@ python search_design.py --predictor q1.pt --labels strength-labels/labels_300k_x
 python eval_unseen.py --predictor q1.pt --codes encoded_codes.npz ^
   --trained-labels strength-labels/labels_100k_x3.csv --labels strength-labels/labels_300k_x3.csv
 ```
+
+## Backend (FastAPI)
+
+`server/` serves the API in the build plan; `core/` connects it to `search_design.py` (set `MOCK=1` for canned results).
+
+```
+uvicorn server.app:app --host 0.0.0.0 --port 8000      # real models, loaded at startup (~17 s)
+MOCK=1 uvicorn server.app:app --port 8000               # canned results, no GPU needed
+pytest                                                   # runs against the mock core
+```
+A job runs adaptive rounds of K = 100, 300, 1000 starting lattices and stops as soon as the solver confirms a design
+matching every target (escalation also stops after `TIME_BUDGET_S`, default 120 s). Each round verifies the unsteered
+start, the early snapshot and the steered end point of every candidate and merges lattices with the same verified behaviour.
+Env: `MOCK`, `MODEL_DIR`, `DEVICE`, `PREDICTOR` (default `q1.pt`), `WORKERS`, `TIME_BUDGET_S`.
+
+## API tests
+
+Needs Python 3.11+. `pytest` runs the 44 tests against the canned core (no GPU). To try the API by hand, open the `bruno/` folder as a collection in Bruno (see `bruno/README.md`).

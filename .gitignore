@@ -14,3 +14,5 @@ predictor.pt
 metrics_test.csv
 r1_metrics.csv
 r3_metrics.csv
+runs/
+.pytest_cache/

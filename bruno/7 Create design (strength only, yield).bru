@@ -1,0 +1,41 @@
+meta {
+  name: 7 Create design (strength only)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "strength_mpa": {
+        "x": 25,
+        "y": 25,
+        "z": 25
+      },
+      "max_mass_g": 120
+    }
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}

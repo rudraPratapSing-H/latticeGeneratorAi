@@ -1,0 +1,15 @@
+meta {
+  name: 5 Job events (SSE)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/jobs/{{jobId}}/events
+  body: none
+  auth: none
+}
+
+docs {
+  Stream of stage/progress/message changes, ending with an event named close. Run request 3 and then this one quickly. Needs a recent Bruno with SSE support; otherwise open the URL in a browser.
+}

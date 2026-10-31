@@ -1,0 +1,15 @@
+meta {
+  name: E2 Unknown job events
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/jobs/j_nope/events
+  body: none
+  auth: none
+}
+
+tests {
+  test("404", function() { expect(res.status).to.equal(404); });
+}

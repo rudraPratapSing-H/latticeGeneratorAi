@@ -1,4 +1,14 @@
-numpy
+# Python 3.11+
+# torch is NOT listed: pip's Windows torch is the CPU build. Install it first (RTX 3050 / CUDA 12.1):
+#   pip install torch==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+numpy<2
 pandas
 scipy
-torch
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.9.0
+sse-starlette>=2.1.0
+httpx>=0.27.0
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
+psutil

@@ -1,0 +1,57 @@
+meta {
+  name: D3 dense, nearly isotropic
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 1.9,
+        "y": 2.38,
+        "z": 2.42
+      },
+      "strength_mpa": {
+        "x": 12.5,
+        "y": 15.8,
+        "z": 13.4
+      },
+      "max_mass_g": 72.3
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  Taken from dataset lattice 796798 (rho 0.25, not in the 100k the predictor trained on): its stiffness, 95% of its strength, mass cap = its mass + 2%. A design must exist, so this should match. Then GET /api/jobs/{{jobId}} until done.
+}

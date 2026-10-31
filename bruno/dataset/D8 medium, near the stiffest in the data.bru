@@ -1,0 +1,57 @@
+meta {
+  name: D8 medium, near the stiffest in the data
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 3.22,
+        "y": 2.17,
+        "z": 2.15
+      },
+      "strength_mpa": {
+        "x": 15.0,
+        "y": 11.6,
+        "z": 11.5
+      },
+      "max_mass_g": 43.4
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  Taken from dataset lattice 467320 (rho 0.15, not in the 100k the predictor trained on): its stiffness, 95% of its strength, mass cap = its mass + 2%. A design must exist, so this should match. Then GET /api/jobs/{{jobId}} until done.
+}

@@ -1,0 +1,52 @@
+meta {
+  name: X1 Stiffer than any Ti lattice in data
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 16,
+        "y": 8,
+        "z": 8
+      },
+      "max_mass_g": 72.3
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5
+  }
+}
+
+script:post-response {
+  bru.setVar("jobId", res.body.job_id);
+}
+
+tests {
+  test("202", function() { expect(res.status).to.equal(202); });
+}
+
+docs {
+  x stiffness 16 GPa is above the dataset maximum (13.1 GPa at rho 0.25). Expect no match.
+}

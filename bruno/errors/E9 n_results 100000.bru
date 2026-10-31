@@ -1,0 +1,49 @@
+meta {
+  name: E9 n_results 100000
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 8,
+        "y": 8,
+        "z": 12
+      },
+      "strength_mpa": {
+        "x": 20,
+        "y": 20,
+        "z": 30
+      },
+      "max_mass_g": 150
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 100000
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); });
+}
