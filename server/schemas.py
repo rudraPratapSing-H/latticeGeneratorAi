@@ -131,6 +131,10 @@ class DesignTarget(BaseModel):
             return a is not None and any(getattr(a, k) is not None for k in "xyz")
         if not (has(self.stiffness_gpa) or has(self.strength_mpa) or has(self.yield_strength_mpa)):
             raise ValueError("give at least one stiffness or strength value (x, y or z)")
+        if has(self.strength_mpa) and has(self.yield_strength_mpa):
+            raise ValueError("send either strength_mpa or yield_strength_mpa, not both")
+        if self.max_mass_g is not None and self.rel_density is not None:
+            raise ValueError("send either max_mass_g or rel_density, not both")
         return self
 
 
