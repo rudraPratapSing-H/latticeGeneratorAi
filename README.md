@@ -65,7 +65,7 @@ python scripts/check_env.py          # Python 3.11, numpy<2, torch + CUDA, every
 .\scripts\dev.ps1                    # real models (GPU laptop, about 20 s to load), API on http://127.0.0.1:8000
 .\scripts\dev.ps1 -Mock              # no GPU: replays stored real runs (mock/) and the stored demo targets (demo/)
 ```
-`dev.ps1` also starts `web/` when that folder exists. Do not use `uvicorn --reload` with the real backend: it breaks
+`dev.ps1` also starts the web app (the `web/` or `lattice-web/` folder), and waits until the API reports `model_loaded` first. Do not use `uvicorn --reload` with the real backend: it breaks
 the solver process pool on Windows. Interactive docs: `/docs`. Try requests in Bruno: open the `bruno/` folder.
 
 **Demo steps (no GPU needed)**: `.\scripts\dev.ps1 -Mock`, then send one of `bruno/dataset/D1`-`D5` (Bruno, or the web form once
