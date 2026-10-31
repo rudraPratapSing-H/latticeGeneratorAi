@@ -26,13 +26,18 @@ def pick_workers() -> tuple[int, str]:
         import psutil
         load = psutil.cpu_percent(interval=1.0, percpu=True)
         free = sum(1 for p in load if p < BUSY_LIMIT)
-        n = max(1, free)
+        n = max(1, free - 1)                           # leave one core for the API and the GPU feeding thread
         return min(n, 61), f"{total} logical cores, {free} free (under {BUSY_LIMIT:.0f}% busy)"
     except Exception:                                   # psutil missing: use everything
         return min(total, 61), f"{total} logical cores (psutil not installed, cannot measure load)"
 
 
 def _init_worker() -> None:
+    try:                                               # solver workers yield to the API server, so /api/health stays fast
+        import psutil
+        psutil.Process().nice(psutil.BELOW_NORMAL_PRIORITY_CLASS if os.name == "nt" else 10)
+    except Exception:
+        pass
     sys.path.insert(0, str(ROOT))
     import search_design  # noqa: F401  - also puts the solver folder on sys.path; imports numpy only
 
