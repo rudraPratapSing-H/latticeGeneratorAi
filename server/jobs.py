@@ -162,7 +162,8 @@ class JobRunner:
                 self._thread = threading.Thread(target=self._loop, name="job-worker", daemon=True)
                 self._thread.start()
 
-    def submit(self, job_id: str, request: DesignRequest) -> None:
+    def submit(self, job_id: str, request: Any) -> None:
+        """`request` is a DesignRequest, or any object with run(job_id, should_stop) (e.g. an implant assembly task)."""
         running, queued = count_active()
         if queued >= MAX_QUEUE:
             raise QueueFull(f"{queued} jobs are already waiting; try again in a few minutes")
@@ -192,7 +193,10 @@ class JobRunner:
                 job = get_job(job_id, include_candidates=False)
                 if job is None or job["status"] != "queued" or flag.is_set():
                     continue                                   # cancelled while waiting
-                run_job_sync(job_id, request, should_stop=flag.is_set)
+                if hasattr(request, "run"):
+                    request.run(job_id, flag.is_set)
+                else:
+                    run_job_sync(job_id, request, should_stop=flag.is_set)
             except Exception as e:  # noqa: BLE001
                 update_job_status(job_id, status="failed", message=f"Pipeline execution failed: {e!s}")
             finally:

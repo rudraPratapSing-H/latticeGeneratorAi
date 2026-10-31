@@ -20,6 +20,7 @@ from core.profiles import implant as profile
 from server import units
 from server.finalize import sanitize
 from server.implant_schemas import (
+    AssembleRequest,
     ConfirmImplantRequest,
     CreateImplantResponse,
     ImplantFields,
@@ -49,6 +50,7 @@ def idir(implant_id: str) -> Path:
 
 
 def write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(sanitize(data), indent=2, allow_nan=False), encoding="utf-8")
     tmp.replace(path)
@@ -245,3 +247,201 @@ async def get_zones(implant_id: str) -> dict:
 async def put_zones(implant_id: str, payload: ZoneEditRequest) -> dict:
     idir(implant_id)
     return sanitize(await _bg(edit_zones, implant_id, payload.model_dump(mode="json", exclude_none=False)))
+
+
+# ------------------------------------------------------------------ zone searches (ordinary design jobs, one per lattice zone)
+def zone_request(zt: dict[str, Any], zone: dict[str, Any], material: str, frame_extents: list[float]):
+    """The DesignRequest for one lattice zone: snapped targets along z, the picker's density, the implant's cell size."""
+    from server.schemas import DesignRequest
+    req = zone["requirement"]
+    snap = (zone.get("reach") or {}).get("snapped")
+    k, s = req["stiffness_gpa"]["z"], req["strength_mpa"]["z"]
+    kz = snap["stiffness_gpa"]["z"] if (snap and k["source"] == "automatic") else k["value"]
+    sz = snap["strength_mpa"]["z"] if (snap and s["source"] == "automatic") else s["value"]
+    size = [float(frame_extents[0]), float(frame_extents[1]), float(zone["range_mm"][1] - zone["range_mm"][0])]
+    target: dict[str, Any] = {"rel_density": float(zone["reach"]["density"])}
+    if kz:
+        target["stiffness_gpa"] = {"z": float(kz)}
+    if sz:
+        target["strength_mpa"] = {"z": float(sz)}
+    return DesignRequest(material=material, part={"size_mm": size, "cell_mm": float(zt["cell_mm"])}, target=target,
+                         modes={"stiffness": "about", "strength": "at_least", "weight": "about"}, tolerance_pct=10.0, n_results=5)
+
+
+def search_zones(implant_id: str) -> dict[str, str]:
+    from server.design_service import submit_design
+    d = idir(implant_id)
+    zt = read_json(d / "zones.json")
+    if not zt or not zt.get("zones"):
+        raise BadTarget("Confirm the implant first (POST /api/implants/{id}/confirm).", code="not_confirmed")
+    undecided = [z for z in zt["zones"] if z["kind"] == "undecided"]
+    if undecided:
+        raise BadTarget(f"{undecided[0]['name']} is undecided: choose solid or lattice (PUT zones with kind) before searching.",
+                        code="undecided_zone", field="zones")
+    meta = read_json(d / "implant.json")
+    prep = prepare(implant_id)
+    extents = [float(v) for v in prep["frame"].extents]
+    jobs: dict[str, str] = {}
+    for z in zt["zones"]:
+        if z["kind"] != "lattice":
+            continue
+        req = zone_request(zt, z, meta["material"], extents)
+        jobs[z["id"]] = submit_design(req, {"implant_id": implant_id, "zone_id": z["id"]})["job_id"]
+    write_json(d / "jobs.json", jobs)
+    return jobs
+
+
+def zone_candidates(implant_id: str, zone_id: str) -> dict[str, Any]:
+    from server.store import get_job
+    d = idir(implant_id)
+    zt = read_json(d / "zones.json") or {"zones": []}
+    zone = next((z for z in zt["zones"] if z["id"] == zone_id), None)
+    if zone is None:
+        raise HTTPException(status_code=404, detail=f"Zone {zone_id} not found")
+    base = {"zone_id": zone_id, "kind": zone["kind"], "reason": zone.get("reason"), "candidates": [], "grid": None, "job": None}
+    if zone["kind"] != "lattice":
+        return base
+    prep = prepare(implant_id)
+    a, b = zone["range_mm"]
+    pitch = zt["cell_mm"]
+    import math
+    from core import tiling
+    c0, c1 = math.ceil(a / pitch - 1e-6) * pitch, math.floor(b / pitch + 1e-6) * pitch
+    grid = tiling.cells_for_range(prep["frame"], c0, c1, pitch) if c1 > c0 else None
+    base["grid"] = {"cell_mm": pitch, "cells": [grid.nx, grid.ny, int(round((c1 - c0) / pitch))] if grid else [0, 0, 0],
+                    "whole_cells": len(grid.cells) if grid else 0}
+    job_id = read_json(d / "jobs.json", {}).get(zone_id)
+    if job_id:
+        job = get_job(job_id)
+        if job:
+            base["job"] = {"job_id": job_id, "status": job["status"], "stage": job.get("stage"), "progress": job.get("progress"),
+                           "message": job.get("message"), "queue_position": job.get("queue_position")}
+            base["candidates"] = job.get("candidates", [])
+    return base
+
+
+@router.post("/{implant_id}/search")
+async def post_search(implant_id: str) -> dict:
+    from server.jobs import QueueFull
+    idir(implant_id)
+    try:
+        return await _bg(search_zones, implant_id)
+    except QueueFull as e:
+        raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "60"})
+
+
+@router.get("/{implant_id}/zones/{zone_id}/candidates")
+async def get_zone_candidates(implant_id: str, zone_id: str) -> dict:
+    idir(implant_id)
+    return sanitize(await _bg(zone_candidates, implant_id, zone_id))
+
+
+# ------------------------------------------------------------------ assembly (one queued job)
+def resolve_choices(implant_id: str, choices: dict[str, str]) -> dict[str, dict[str, Any]]:
+    """zone id -> the chosen candidate (with its lattice), checked against the zone's own search results."""
+    from server.store import get_job
+    d = idir(implant_id)
+    zt = read_json(d / "zones.json")
+    if not zt or not zt.get("zones"):
+        raise BadTarget("Confirm the implant first.", code="not_confirmed")
+    jobs = read_json(d / "jobs.json", {})
+    out: dict[str, dict[str, Any]] = {}
+    for z in zt["zones"]:
+        if z["kind"] == "undecided":
+            raise BadTarget(f"{z['name']} is undecided: choose solid or lattice first.", code="undecided_zone", field="zones")
+        if z["kind"] != "lattice":
+            continue
+        cid = choices.get(z["id"])
+        if not cid:
+            raise BadTarget(f"Choose a candidate for {z['name']}.", code="missing_choice", field="choices")
+        job_id = jobs.get(z["id"])
+        job = get_job(job_id) if job_id else None
+        if job is None or job["status"] != "done":
+            raise BadTarget(f"The search for {z['name']} has not finished.", code="search_not_done", field="choices")
+        cand = next((c for c in job.get("candidates", []) if c["id"] == cid), None)
+        if cand is None:
+            raise BadTarget(f"{cid} is not a candidate of {z['name']}.", code="unknown_candidate", field="choices")
+        out[z["id"]] = cand
+    extra = set(choices) - {z["id"] for z in zt["zones"]}
+    if extra:
+        raise BadTarget(f"Unknown zone(s): {', '.join(sorted(extra))}.", code="unknown_zone", field="choices")
+    return out
+
+
+def build_assembly(implant_id: str, chosen: dict[str, dict[str, Any]], interface_mm: float | None, sides: int,
+                   progress=None, should_stop=None):
+    from core import assemble as asm
+    d = idir(implant_id)
+    zt = read_json(d / "zones.json")
+    prep = prepare(implant_id)
+    lattices = {zid: {**c["lattice"], "rel_density": c["rel_density"]} for zid, c in chosen.items()}
+    return asm.assemble(prep["frame"], zt["zones"], zt["cell_mm"], lattices, interface_mm, sides, progress, should_stop)
+
+
+def assembly_summary(a) -> dict[str, Any]:
+    return {"length_mm": a.length_mm, "cell_mm": a.cell_mm, "interface_mm": a.interface_mm, "sides": a.sides,
+            "triangles": a.triangles, "zones": a.zones, "warnings": a.warnings, "notes": a.notes,
+            "parts": [{"name": p.name, "kind": p.kind, "zone_ids": p.zone_ids, "triangles": int(len(p.mesh.faces)),
+                       "watertight": bool(p.mesh.is_watertight), "volume_mm3": float(abs(p.mesh.volume))} for p in a.parts],
+            "verification": {"geometry": "geometry_only"}}
+
+
+class AssembleTask:
+    """Runs on the job worker thread: tile -> assemble (T16 adds check and export). Cancel and progress work as for searches."""
+
+    def __init__(self, implant_id: str, chosen: dict[str, dict[str, Any]], interface_mm: float | None, sides: int) -> None:
+        self.implant_id, self.chosen, self.interface_mm, self.sides = implant_id, chosen, interface_mm, sides
+
+    def run(self, job_id: str, should_stop) -> None:
+        from core.assemble import AssemblyFailed
+        from server.store import update_job_status
+
+        def progress(stage: str, frac: float, msg: str) -> None:
+            update_job_status(job_id, status="running", stage=stage, progress=frac, message=msg)
+        try:
+            a = build_assembly(self.implant_id, self.chosen, self.interface_mm, self.sides, progress, should_stop)
+            summary = assembly_summary(a)
+            out = idir(self.implant_id) / "assemblies" / job_id
+            write_json(out / "assembly.json", sanitize(summary))
+            from server.store import save_results
+            save_results(job_id, [])                       # marks the job as reusable for find_by_cache_key
+            update_job_status(job_id, status="done", stage="assemble", progress=1.0, message="Assembly finished",
+                              meta=sanitize({"summary": summary}))
+        except InterruptedError:
+            update_job_status(job_id, status="cancelled", message="Cancelled.")
+        except (AssemblyFailed, ValueError) as e:
+            update_job_status(job_id, status="failed", message=str(e))
+
+
+def submit_assemble(implant_id: str, body: dict[str, Any]) -> dict[str, str]:
+    import hashlib
+    from server.jobs import runner
+    from server.store import create_job, find_by_cache_key, update_job_status
+    chosen = resolve_choices(implant_id, body["choices"])
+    d = idir(implant_id)
+    key_src = json.dumps({"implant": implant_id, "zones": read_json(d / "zones.json"), "confirm": read_json(d / "implant.json")["confirm"],
+                          "choices": {z: c["id"] for z, c in sorted(chosen.items())}, "interface": body.get("interface_mm"),
+                          "sides": body.get("sides", 8)}, sort_keys=True, default=str)
+    key = "asm_" + hashlib.sha256(key_src.encode()).hexdigest()[:24]
+    same = find_by_cache_key(key)
+    if same is not None:
+        return same
+    job_id = f"a_{uuid.uuid4().hex[:8]}"
+    create_job(job_id=job_id, status="queued", message="Assembly queued",
+               meta=sanitize({"cache_key": key, "kind": "assemble", "implant_id": implant_id}))
+    try:
+        runner.submit(job_id, AssembleTask(implant_id, chosen, body.get("interface_mm"), body.get("sides", 8)))
+    except Exception as e:
+        update_job_status(job_id, status="failed", message=str(e))
+        raise
+    return {"job_id": job_id, "status": "queued"}
+
+
+@router.post("/{implant_id}/assemble", status_code=202)
+async def post_assemble(implant_id: str, payload: AssembleRequest) -> dict:
+    from server.jobs import QueueFull
+    idir(implant_id)
+    try:
+        return await _bg(submit_assemble, implant_id, payload.model_dump())
+    except QueueFull as e:
+        raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "60"})

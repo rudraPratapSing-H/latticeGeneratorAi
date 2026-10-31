@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -33,6 +34,10 @@ class JobStage(str, Enum):
     REPAIR = "repair"
     VERIFY = "verify"
     RANK = "rank"
+    TILE = "tile"            # implant assembly jobs
+    ASSEMBLE = "assemble"
+    CHECK = "check"
+    EXPORT = "export"
 
 
 class FailureMode(str, Enum):
@@ -268,6 +273,10 @@ class JobResponse(BaseModel):
     rounds: list[RoundInfo] = Field(default_factory=list, description="Finished search rounds")
     infeasible: bool = Field(default=False, description="Stiffnesses add up to more than 1.05 x density x E_s")
     warnings: list[str] = Field(default_factory=list, description="Plain-language warnings")
+    kind: str | None = Field(default=None, description="design (default) or assemble")
+    implant_id: str | None = Field(default=None, description="set for jobs that belong to an implant")
+    summary: dict[str, Any] | None = Field(default=None, description="assemble jobs: the assembly summary (geometry only; see verification)")
+    zone_id: str | None = Field(default=None)
     skipped_invalid: int = Field(default=0, description="Candidates dropped because the solver result was not physical")
     reach: dict | None = Field(default=None, description="Dataset picker result for the request")
     candidates: list[Candidate] = Field(default_factory=list, description="List of generated lattice design candidates")

@@ -36,6 +36,7 @@ try:
         ReachResponse,
     )
     from server import demo, preflight
+    from server.design_service import submit_design
     from server.finalize import sanitize
     from server.picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from server.store import (
@@ -197,23 +198,10 @@ async def post_reach(payload: ReachRequest) -> dict:
 )
 async def create_design(payload: DesignRequest) -> dict[str, str]:
     """Check the request against the dataset, reuse an identical earlier job, otherwise queue it. Returns 202."""
-    pre = await asyncio.get_running_loop().run_in_executor(None, preflight.run, payload)   # BadTarget -> 422
-    same = find_by_cache_key(pre.cache_key) or await asyncio.get_running_loop().run_in_executor(None, demo.find, payload)
-    if same is not None:
-        return same
-    job_id = f"j_{uuid.uuid4().hex[:8]}"
-    save_request(job_id, payload.model_dump(mode="json"))
-    reach_meta = None
-    if pre.reach is not None:
-        reach_meta = {k: pre.reach[k] for k in ("level", "distance_pct", "density", "nearest", "bounds", "message")}
-    create_job(job_id=job_id, status="queued", stage=None, progress=0.0, message="Job queued for processing",
-               meta=sanitize({"cache_key": pre.cache_key, "warnings": pre.warnings, "reach": reach_meta}))
     try:
-        runner.submit(job_id, payload)
+        return await asyncio.get_running_loop().run_in_executor(None, submit_design, payload)      # BadTarget -> 422
     except QueueFull as e:
-        update_job_status(job_id, status="failed", message=str(e))
         raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "60"})
-    return {"job_id": job_id, "status": "queued"}
 
 
 @app.get("/api/jobs/{job_id}", response_model=JobResponse)

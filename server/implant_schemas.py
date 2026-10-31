@@ -156,3 +156,9 @@ class ZoneEdit(BaseModel):
 class ZoneEditRequest(BaseModel):
     zones: list[ZoneEdit] | None = None
     cell_mm: float | None = Field(default=None, gt=0.5, le=50)
+
+
+class AssembleRequest(BaseModel):
+    choices: dict[str, str] = Field(..., description="zone id -> candidate id, one per lattice zone")
+    interface_mm: float | None = Field(default=None, gt=0.1, le=5, description="thickness of the solid plate between zones (default 0.6)")
+    sides: Literal[8, 12] = 8
