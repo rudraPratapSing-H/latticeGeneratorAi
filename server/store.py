@@ -143,6 +143,32 @@ def fail_stale_jobs(db_path: str | Path = DEFAULT_DB_PATH) -> int:
         conn.close()
 
 
+def find_by_cache_key(key: str, db_path: str | Path = DEFAULT_DB_PATH) -> dict[str, Any] | None:
+    """The newest job for this canonical request that is finished-and-done, or still waiting/running."""
+    conn = get_db_connection(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT job_id, status FROM jobs WHERE json_extract(meta, '$.cache_key') = ? "
+            "AND status IN ('done', 'queued', 'running') ORDER BY rowid DESC", (key,)).fetchall()
+    finally:
+        conn.close()
+    for r in rows:
+        if r["status"] != "done" or (Path(db_path).parent / r["job_id"] / "results.json").exists():
+            return {"job_id": r["job_id"], "status": r["status"]}
+    return None
+
+
+def set_message_if_running(job_id: str, message: str, db_path: str | Path = DEFAULT_DB_PATH) -> None:
+    """Change the message only while the job is still running (a finished job's final message must win)."""
+    conn = get_db_connection(db_path)
+    try:
+        with conn:
+            conn.execute("UPDATE jobs SET message = ?, updated_at = ? WHERE job_id = ? AND status = 'running'",
+                         (message, _now(), job_id))
+    finally:
+        conn.close()
+
+
 def count_active(db_path: str | Path = DEFAULT_DB_PATH) -> tuple[int, int]:
     """(running, queued) job counts."""
     conn = get_db_connection(db_path)

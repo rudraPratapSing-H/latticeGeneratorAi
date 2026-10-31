@@ -71,7 +71,7 @@ def _run(client, payload):
 
 def test_candidate_ids_are_unique_per_job_and_resolvable(client):
     jid1, j1 = _run(client, BASE)
-    jid2, j2 = _run(client, BASE)
+    jid2, j2 = _run(client, {**BASE, "tolerance_pct": 11})        # a different request: an identical one is cached
     ids1 = [c["id"] for c in j1["candidates"]]
     ids2 = [c["id"] for c in j2["candidates"]]
     assert ids1 and len(set(ids1)) == len(ids1)

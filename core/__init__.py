@@ -52,3 +52,27 @@ def start_engine() -> Any:
 
 def health() -> dict[str, Any]:
     return get_engine().health()
+
+
+_hash: str | None = None
+
+
+def model_hash() -> str:
+    """Fingerprint of the model files (real mode) or the stored mock runs (MOCK=1); a cached result is only valid
+    for the files it was made with. Size + modification time, so it is instant even for the 55 MB code file."""
+    global _hash
+    if _hash is None:
+        import hashlib
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        if MOCK:
+            files = sorted((root / "mock").glob("sample_*.json"))
+        else:
+            from core import envcheck
+            files = [root / rel for rel, _, _ in envcheck.MODEL_FILES] + [root / "search_design.py"]
+        h = hashlib.sha256(b"mock" if MOCK else b"real")
+        for f in files:
+            st = f.stat() if f.exists() else None
+            h.update(f"{f.name}:{st.st_size if st else 0}:{st.st_mtime_ns if st else 0}".encode())
+        _hash = h.hexdigest()[:16]
+    return _hash

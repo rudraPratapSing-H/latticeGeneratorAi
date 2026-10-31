@@ -10,9 +10,10 @@ from server import units
 class BadTarget(Exception):
     """A request that fails a plausibility rule. Becomes 422 {"error": {"code": "bad_target", ...}}."""
 
-    def __init__(self, message: str, code: str = "bad_target", field: str | None = None) -> None:
+    def __init__(self, message: str, code: str = "bad_target", field: str | None = None,
+                 extra: dict | None = None) -> None:
         super().__init__(message)
-        self.message, self.code, self.field = message, code, field
+        self.message, self.code, self.field, self.extra = message, code, field, extra or {}
 
 
 def material_or_raise(material_id: str) -> dict[str, Any]:

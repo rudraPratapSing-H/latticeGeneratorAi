@@ -35,11 +35,14 @@ try:
         ReachRequest,
         ReachResponse,
     )
+    from server import preflight
+    from server.finalize import sanitize
     from server.picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from server.store import (
         DEFAULT_RUNS_DIR,
         create_job,
         fail_stale_jobs,
+        find_by_cache_key,
         get_job,
         init_db,
         save_request,
@@ -62,6 +65,8 @@ except ImportError:
         ReachRequest,
         ReachResponse,
     )
+    import preflight
+    from finalize import sanitize
     from picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from store import (
         DEFAULT_RUNS_DIR,
@@ -116,7 +121,7 @@ async def http_error_handler(request, exc: StarletteHTTPException) -> JSONRespon
 
 @app.exception_handler(BadTarget)
 async def bad_target_handler(request, exc: BadTarget) -> JSONResponse:
-    return JSONResponse(status_code=422, content=_error_body(exc.code, exc.message, field=exc.field))
+    return JSONResponse(status_code=422, content=_error_body(exc.code, exc.message, field=exc.field, **exc.extra))
 
 
 # Initialize database at module load time as well
@@ -162,7 +167,7 @@ async def get_limits(material: str = "ti64") -> dict:
     from core import reach
     m = material_or_raise(material)
     try:
-        return reach.get_table().limits(m)
+        return sanitize(reach.get_table().limits(m))
     except reach.ReachUnavailable as e:
         raise HTTPException(status_code=503, detail=str(e))
 
@@ -174,7 +179,7 @@ async def post_reach(payload: ReachRequest) -> dict:
     m = material_or_raise(payload.material)
     plausibility(payload, m)
     try:
-        return await asyncio.get_running_loop().run_in_executor(None, reach_for_request, payload, m)
+        return sanitize(await asyncio.get_running_loop().run_in_executor(None, reach_for_request, payload, m))
     except reach.ReachUnavailable as e:
         raise HTTPException(status_code=503, detail=str(e))
 
@@ -185,10 +190,18 @@ async def post_reach(payload: ReachRequest) -> dict:
     response_model=JobCreateResponse,
 )
 async def create_design(payload: DesignRequest) -> dict[str, str]:
-    """Validate, queue the job (one search runs at a time) and return 202 straight away."""
+    """Check the request against the dataset, reuse an identical earlier job, otherwise queue it. Returns 202."""
+    pre = await asyncio.get_running_loop().run_in_executor(None, preflight.run, payload)   # BadTarget -> 422
+    same = find_by_cache_key(pre.cache_key)
+    if same is not None:
+        return same
     job_id = f"j_{uuid.uuid4().hex[:8]}"
     save_request(job_id, payload.model_dump(mode="json"))
-    create_job(job_id=job_id, status="queued", stage=None, progress=0.0, message="Job queued for processing")
+    reach_meta = None
+    if pre.reach is not None:
+        reach_meta = {k: pre.reach[k] for k in ("level", "distance_pct", "density", "nearest", "bounds", "message")}
+    create_job(job_id=job_id, status="queued", stage=None, progress=0.0, message="Job queued for processing",
+               meta=sanitize({"cache_key": pre.cache_key, "warnings": pre.warnings, "reach": reach_meta}))
     try:
         runner.submit(job_id, payload)
     except QueueFull as e:
@@ -206,7 +219,7 @@ async def get_job_endpoint(job_id: str) -> JobResponse:
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Job {job_id} not found",
         )
-    return JobResponse(**job_data)
+    return JobResponse(**sanitize(job_data))
 
 
 @app.post("/api/jobs/{job_id}/cancel")
@@ -254,7 +267,7 @@ def _find_candidate_in_runs(design_id: str) -> Candidate | None:
                 cands = json.load(f)
             for c in cands:
                 if isinstance(c, dict) and c.get("id") == design_id:
-                    return Candidate(**c)
+                    return Candidate(**sanitize(c))
         except (OSError, json.JSONDecodeError, ValueError):
             pass
     return None

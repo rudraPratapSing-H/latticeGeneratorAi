@@ -22,8 +22,17 @@ def client(monkeypatch):
     return TestClient(app)
 
 
+_n = [0]
+
+
+def fresh_body():
+    """A request nobody sent before (an identical one would be answered from the cache)."""
+    _n[0] += 1
+    return {**BODY, "tolerance_pct": 10 + _n[0] * 0.01}
+
+
 def submit(client):
-    r = client.post("/api/designs", json=BODY)
+    r = client.post("/api/designs", json=fresh_body())
     assert r.status_code == 202
     return r.json()["job_id"]
 
@@ -104,7 +113,7 @@ def test_health_answers_fast_while_a_job_runs(client):
 
 def test_queue_full_is_429(client, monkeypatch):
     monkeypatch.setattr(jobs_mod, "MAX_QUEUE", 0)
-    r = client.post("/api/designs", json=BODY)
+    r = client.post("/api/designs", json=fresh_body())
     assert r.status_code == 429 and r.json()["error"]["code"] == "queue_full" and "Retry-After" in r.headers
 
 

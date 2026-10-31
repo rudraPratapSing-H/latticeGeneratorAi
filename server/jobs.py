@@ -19,7 +19,7 @@ from core.engine import K_LADDER
 from server import units
 from server.finalize import finalize_candidates, rounds_info, sanitize
 from server.schemas import DesignRequest
-from server.store import FINISHED, count_active, get_job, save_results, update_job_status
+from server.store import FINISHED, count_active, get_job, save_results, set_message_if_running, update_job_status
 
 MATERIALS_DB = units.MATERIALS
 build_spec = units.to_search_spec
@@ -117,7 +117,8 @@ def run_job_sync(job_id: str, request: DesignRequest, *, k_values: list[int] | N
         if result.get("stopped") or stop():
             status, msg = "cancelled", f"Stopped after round {len(result['rounds'])}; showing the best designs so far."
         elif not top:
-            status, msg = "done", "No valid lattice found for this target."
+            status, msg = "failed", "No valid lattice found for this target (no_valid_design)."
+            meta["failure_reason"] = "no_valid_design"
         elif matched:
             status, msg = "done", f"Found {sum(c.get('matches_targets', False) for c in top)} design(s) meeting every target."
         elif result["infeasible"]:
@@ -172,7 +173,8 @@ class JobRunner:
             flag.set()
         if job["status"] == "queued":
             return update_job_status(job_id, status="cancelled", message="Cancelled while waiting in the queue.")
-        return update_job_status(job_id, message="Stopping after the current search round...")
+        set_message_if_running(job_id, "Stopping after the current search round...")
+        return get_job(job_id, include_candidates=False)
 
     def _loop(self) -> None:
         while True:

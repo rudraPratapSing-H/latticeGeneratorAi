@@ -54,8 +54,8 @@ def test_create_designs_endpoint(client):
         "material": "ti64",
         "part": {"size_mm": [40, 40, 40], "cell_mm": 10},
         "target": {
-            "stiffness_gpa": {"x": 8.0, "y": 8.0, "z": 12.0},
-            "strength_mpa": {"x": 90, "y": 90, "z": None},
+            "stiffness_gpa": {"x": 4.0, "y": 4.0, "z": 6.0},
+            "strength_mpa": {"x": 20, "y": 20, "z": None},
             "max_mass_g": 60,
         },
         "modes": {
