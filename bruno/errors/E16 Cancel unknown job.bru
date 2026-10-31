@@ -1,0 +1,19 @@
+meta {
+  name: E16 Cancel unknown job
+  type: http
+  seq: 16
+}
+
+post {
+  url: {{baseUrl}}/api/jobs/j_nope/cancel
+  body: none
+  auth: none
+}
+
+tests {
+  test("404", function() { expect(res.status).to.equal(404); expect(res.body.error.code).to.equal("not_found"); });
+}
+
+docs {
+  Unknown job id.
+}

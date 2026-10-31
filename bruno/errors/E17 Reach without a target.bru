@@ -1,0 +1,28 @@
+meta {
+  name: E17 Reach without a target
+  type: http
+  seq: 17
+}
+
+post {
+  url: {{baseUrl}}/api/reach
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "target": {
+      "max_mass_g": 50
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); });
+}
+
+docs {
+  At least one stiffness or strength value is needed.
+}

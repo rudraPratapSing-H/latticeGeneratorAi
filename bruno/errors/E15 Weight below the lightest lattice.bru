@@ -1,0 +1,46 @@
+meta {
+  name: E15 Weight below the lightest lattice
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5,
+    "target": {
+      "stiffness_gpa": {
+        "x": 0.3
+      },
+      "max_mass_g": 5
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); expect(res.body.error.message).to.include("at least"); });
+}
+
+docs {
+  Relative density 0.05 is the lightest in the data; the message gives the lightest possible mass for this part.
+}

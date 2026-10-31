@@ -56,18 +56,49 @@ python eval_unseen.py --predictor q1.pt --codes encoded_codes.npz ^
 
 ## Backend (FastAPI)
 
-`server/` serves the API in the build plan; `core/` connects it to `search_design.py` (set `MOCK=1` for canned results).
+`server/` is the API from `docs/BUILD_PLAN.md`; `core/engine.py` is the only code that imports torch and `search_design.py`.
+
+**Start it (PowerShell, from the repo root)**
 
 ```
-uvicorn server.app:app --host 0.0.0.0 --port 8000      # real models, loaded at startup (~17 s)
-MOCK=1 uvicorn server.app:app --port 8000               # canned results, no GPU needed
-pytest                                                   # runs against the mock core
+python scripts/check_env.py          # Python 3.11, numpy<2, torch + CUDA, every model file OK / missing / Git LFS pointer
+.\scripts\dev.ps1                    # real models (GPU laptop, about 20 s to load), API on http://127.0.0.1:8000
+.\scripts\dev.ps1 -Mock              # no GPU: replays stored real runs (mock/) and the stored demo targets (demo/)
 ```
-A job runs adaptive rounds of K = 100, 300, 1000 starting lattices and stops as soon as the solver confirms a design
-matching every target (escalation also stops after `TIME_BUDGET_S`, default 120 s). Each round verifies the unsteered
-start, the early snapshot and the steered end point of every candidate and merges lattices with the same verified behaviour.
-Env: `MOCK`, `MODEL_DIR`, `DEVICE`, `PREDICTOR` (default `q1.pt`), `WORKERS`, `TIME_BUDGET_S`.
+`dev.ps1` also starts `web/` when that folder exists. Do not use `uvicorn --reload` with the real backend: it breaks
+the solver process pool on Windows. Interactive docs: `/docs`. Try requests in Bruno: open the `bruno/` folder.
+
+**Demo steps (no GPU needed)**: `.\scripts\dev.ps1 -Mock`, then send one of `bruno/dataset/D1`-`D5` (Bruno, or the web form once
+`web/` exists). The five demo targets in `demo/` (real solver-verified results of `bruno/dataset_requests.json` D1-D5) are
+answered from the store, instantly.
+With the GPU, the same requests are answered from the store when the model files are unchanged, and any other target is searched.
+
+**What a request does**: `POST /api/designs` checks the material, plausibility (stiffness above E_s is a unit mistake), the
+weight limit and the dataset picker (`core/reach.py`) first. An infeasible target is a 422 with the bound and the nearest
+achievable target unless `force: true`. An identical earlier request (canonical JSON + model-file hash) returns the stored job.
+Otherwise the job waits in a queue (one search at a time, 429 when the queue is full) and runs adaptive rounds of
+K = 100, 300, 1000 starting lattices; it stops on a match, when a round gains under half a point, at `TIME_BUDGET_S`
+(default 120 s) or on `POST /api/jobs/{id}/cancel`. Each round solver-verifies the start, an early snapshot and the steered end
+point of every candidate and merges lattices with the same verified behaviour. Mass is density x part volume x material
+density (an estimate). Every response goes through `sanitize()`: no NaN, Infinity or NumPy types.
+
+**Endpoints**: `GET /api/health`, `/api/materials`, `/api/limits`, `POST /api/reach`, `POST /api/designs`,
+`GET /api/jobs/{id}`, `GET /api/jobs/{id}/events` (SSE with pings), `POST /api/jobs/{id}/cancel` (or `DELETE`), `GET /api/designs/{id}`.
+Errors are `{"error": {"code", "message"}}`.
+
+**Env**: `MOCK`, `MODEL_DIR`, `DEVICE`, `PREDICTOR` (default `q1.pt`), `WORKERS`, `TIME_BUDGET_S`, `MAX_QUEUE` (10), `RUNS_DIR`,
+`SSE_PING_S` (15), `MOCK_STAGE_DELAY` (0.3 s per stage in mock mode).
+
+**Rebuilding generated files** (each needs the real files, see the script docstrings)
+
+```
+python scripts/build_reach_table.py C:\path\to\strength-labels\labels_300k_x3.csv   # core/tables/reach_table.npz (Git LFS)
+python scripts/build_demo.py --count 5                                                  # demo/ (GPU laptop)
+python scripts/make_mock.py                                                             # mock/ from sample_*.json
+```
 
 ## API tests
 
-Needs Python 3.11+. `pytest` runs the 44 tests against the canned core (no GPU). To try the API by hand, open the `bruno/` folder as a collection in Bruno (see `bruno/README.md`).
+Needs Python 3.11. `pytest -q` runs the suite against the mock core (no GPU, about a minute). `pytest -q -m gpu` runs the checks
+that need the models: the engine on the `sample_3` request, the picker test on 10 unseen lattices (needs the label files; set
+`LABELS_DIR` if they are not in `../strength-labels`), and a real server answering a job over HTTP.

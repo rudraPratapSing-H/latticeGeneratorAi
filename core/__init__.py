@@ -55,24 +55,41 @@ def health() -> dict[str, Any]:
 
 
 _hash: str | None = None
+_real_hash: str | None = None
+
+
+def _fingerprint(mock: bool) -> str:
+    """Content hash of the model files (real) or the stored mock runs (mock); about 0.3 s for the real files."""
+    import hashlib
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent
+    if mock:
+        files = sorted((root / "mock").glob("sample_*.json"))
+    else:
+        from core import envcheck
+        files = [root / rel for rel, _, _ in envcheck.MODEL_FILES] + [root / "search_design.py"]
+    h = hashlib.sha256(b"mock" if mock else b"real")
+    for f in files:
+        h.update(f.name.encode())
+        if f.is_file():
+            with open(f, "rb") as fh:
+                for chunk in iter(lambda: fh.read(1 << 20), b""):
+                    h.update(chunk)
+    return h.hexdigest()[:16]
 
 
 def model_hash() -> str:
-    """Fingerprint of the model files (real mode) or the stored mock runs (MOCK=1); a cached result is only valid
-    for the files it was made with. Size + modification time, so it is instant even for the 55 MB code file."""
+    """Fingerprint of what produces results in this process. A cached or stored result is only valid for the files
+    it was made with; a content hash survives a fresh git clone."""
     global _hash
     if _hash is None:
-        import hashlib
-        from pathlib import Path
-        root = Path(__file__).resolve().parent.parent
-        if MOCK:
-            files = sorted((root / "mock").glob("sample_*.json"))
-        else:
-            from core import envcheck
-            files = [root / rel for rel, _, _ in envcheck.MODEL_FILES] + [root / "search_design.py"]
-        h = hashlib.sha256(b"mock" if MOCK else b"real")
-        for f in files:
-            st = f.stat() if f.exists() else None
-            h.update(f"{f.name}:{st.st_size if st else 0}:{st.st_mtime_ns if st else 0}".encode())
-        _hash = h.hexdigest()[:16]
+        _hash = _fingerprint(MOCK)
     return _hash
+
+
+def real_model_hash() -> str:
+    """The hash of the real model files, even in mock mode (stamps and checks stored demo results)."""
+    global _real_hash
+    if _real_hash is None:
+        _real_hash = _hash if (not MOCK and _hash) else _fingerprint(False)
+    return _real_hash

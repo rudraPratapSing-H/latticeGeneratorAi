@@ -1,0 +1,47 @@
+meta {
+  name: E14 Stiffness typed in MPa
+  type: http
+  seq: 14
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5,
+    "target": {
+      "stiffness_gpa": {
+        "x": 8000,
+        "y": null,
+        "z": null
+      }
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); expect(res.body.error.message).to.include("GPa"); });
+}
+
+docs {
+  A stiffness above the material's own modulus is a unit mistake; the message says stiffness is in GPa.
+}

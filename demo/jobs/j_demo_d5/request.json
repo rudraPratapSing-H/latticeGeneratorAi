@@ -1,0 +1,34 @@
+{
+  "material": "ti64",
+  "part": {
+    "size_mm": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "cell_mm": 10.0
+  },
+  "target": {
+    "stiffness_gpa": {
+      "x": 1.62,
+      "y": 0.306,
+      "z": 0.509
+    },
+    "strength_mpa": {
+      "x": 7.51,
+      "y": 2.06,
+      "z": 2.93
+    },
+    "yield_strength_mpa": null,
+    "max_mass_g": 43.4,
+    "rel_density": null
+  },
+  "modes": {
+    "stiffness": "about",
+    "strength": "at_least",
+    "weight": "at_most"
+  },
+  "tolerance_pct": 10.0,
+  "n_results": 5,
+  "force": false
+}

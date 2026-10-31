@@ -1,0 +1,48 @@
+meta {
+  name: E11 Infeasible target
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5,
+    "target": {
+      "stiffness_gpa": {
+        "x": 20,
+        "y": 20,
+        "z": 20
+      },
+      "max_mass_g": 60
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); expect(res.body.error.reach.level).to.equal("infeasible"); });
+}
+
+docs {
+  Stiffness adds up to more than density x E_s: 422 with the bound and nearest achievable target.
+}

@@ -1,0 +1,49 @@
+meta {
+  name: E13 Mass limit and density together
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5,
+    "target": {
+      "stiffness_gpa": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "max_mass_g": 60,
+      "rel_density": 0.15
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); });
+}
+
+docs {
+  Send either max_mass_g or rel_density, not both.
+}

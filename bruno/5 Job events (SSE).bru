@@ -11,5 +11,5 @@ get {
 }
 
 docs {
-  Stream of stage/progress/message changes, ending with an event named close. Run request 3 and then this one quickly. Needs a recent Bruno with SSE support; otherwise open the URL in a browser.
+  Stream of state changes (status, stage, round, k, progress, message, queue_position) with a comment ping every 15 s, ending with an event named close. If the stream drops, poll request 4 every 2 s. Needs a recent Bruno with SSE support; otherwise open the URL in a browser.
 }

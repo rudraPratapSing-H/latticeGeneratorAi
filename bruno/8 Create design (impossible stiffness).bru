@@ -37,9 +37,9 @@ script:post-response {
 }
 
 tests {
-  test("202", function() { expect(res.status).to.equal(202); });
+  test("422 with the bound", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); expect(res.body.error.reach.level).to.equal("infeasible"); expect(res.body.error.message).to.include("GPa"); });
 }
 
 docs {
-  20+20+20 GPa at 60 g is above rho x E. After it finishes the message should say it cannot be met at this density, with one search round only.
+  20+20+20 GPa at 60 g is above density x E_s. The picker rejects it up front with 422, the bound and the nearest achievable target (error.reach). Send force: true to search anyway (request 12).
 }

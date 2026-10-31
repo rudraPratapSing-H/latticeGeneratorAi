@@ -45,9 +45,9 @@ body:json {
 }
 
 tests {
-  test("202", function() { expect(res.status).to.equal(202); });
+  test("422 unknown_material", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("unknown_material"); });
 }
 
 docs {
-  Accepted with 202 and then the job ends as failed: unknown material is only checked inside the job.
+  Unknown materials are rejected up front (422, code unknown_material); the message lists the available ones.
 }

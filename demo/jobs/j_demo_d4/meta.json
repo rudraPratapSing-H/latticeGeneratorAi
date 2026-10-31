@@ -1,0 +1,44 @@
+{
+  "cache_key": "bbadda4b922d406695e3ba7fa41e16cb",
+  "warnings": [
+    "Stored demo result (real run)."
+  ],
+  "reach": {
+    "level": "covered",
+    "distance_pct": 0.11,
+    "density": 0.15,
+    "nearest": {
+      "stiffness_gpa": [
+        0.5785,
+        0.595,
+        1.6383
+      ],
+      "strength_mpa": [
+        3.589,
+        2.433,
+        12.09
+      ],
+      "lattice_id": 740194
+    },
+    "bounds": {
+      "stiffness_sum_max_gpa": 17.1,
+      "strength_max_mpa": 45.28
+    },
+    "message": "A stored lattice is within 10% of this target. The search should match quickly."
+  },
+  "round": 1,
+  "k": 100,
+  "rounds": [
+    {
+      "round": 1,
+      "k": 100,
+      "best_error_pct": 5.12,
+      "matched": true,
+      "n_candidates": 275,
+      "round_seconds": 37.86,
+      "elapsed_seconds": 37.86
+    }
+  ],
+  "infeasible": false,
+  "final_message": "Found 2 design(s) meeting every target."
+}

@@ -44,9 +44,9 @@ script:post-response {
 }
 
 tests {
-  test("202", function() { expect(res.status).to.equal(202); });
+  test("422 infeasible", function() { expect(res.status).to.equal(422); expect(res.body.error.reach.level).to.equal("infeasible"); });
 }
 
 docs {
-  120 MPa is above the dataset maximum (76 MPa). Expect no match.
+  120 MPa is above the dataset maximum (76 MPa). The picker answers 422 with the bound and the nearest achievable target; add force: true to search anyway.
 }

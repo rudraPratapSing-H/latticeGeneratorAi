@@ -1,0 +1,19 @@
+meta {
+  name: 11 Cancel job
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/api/jobs/{{jobId}}/cancel
+  body: none
+  auth: none
+}
+
+tests {
+  test("200 and a status", function() { expect(res.status).to.equal(200); expect(["cancelled","running","done","failed"]).to.include(res.body.status); });
+}
+
+docs {
+  Stops a job: a queued job is cancelled at once, a running job after its current search round (status becomes cancelled and the best designs so far are kept). Cancelling a finished job returns its status unchanged. DELETE on the same path does the same.
+}

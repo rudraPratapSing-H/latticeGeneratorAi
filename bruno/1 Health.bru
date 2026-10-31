@@ -11,9 +11,9 @@ get {
 }
 
 tests {
-  test("200 ok", function() { expect(res.status).to.equal(200); expect(res.body.status).to.equal("ok"); });
+  test("200 ok", function() { expect(res.status).to.equal(200); expect(res.body.status).to.equal("ok"); expect(res.body).to.have.property("model_loaded"); expect(res.body).to.have.property("solver_workers"); });
 }
 
 docs {
-  model_loaded is false until the models finish loading (about 17 s after start in real mode).
+  model_loaded is false until the models finish loading (about 20 s after start in real mode); reason says what is wrong when they cannot load (missing file, Git LFS pointer, NumPy 2). Answers in well under 100 ms while a search runs.
 }

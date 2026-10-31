@@ -1,0 +1,48 @@
+meta {
+  name: E12 Strength and yield strength together
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/api/designs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "at_most"
+    },
+    "tolerance_pct": 10,
+    "n_results": 5,
+    "target": {
+      "strength_mpa": {
+        "x": 20
+      },
+      "yield_strength_mpa": {
+        "x": 20
+      }
+    }
+  }
+}
+
+tests {
+  test("422", function() { expect(res.status).to.equal(422); expect(res.body.error.code).to.equal("bad_target"); });
+}
+
+docs {
+  Send either strength_mpa or yield_strength_mpa, not both.
+}

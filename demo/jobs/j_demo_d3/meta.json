@@ -1,0 +1,45 @@
+{
+  "cache_key": "2c914a3ad4937185fe733b32a807d698",
+  "warnings": [
+    "The weight limit allows a relative density of 0.26; designs use at most 0.25, the densest the model was trained on.",
+    "Stored demo result (real run)."
+  ],
+  "reach": {
+    "level": "covered",
+    "distance_pct": 0.13,
+    "density": 0.25,
+    "nearest": {
+      "stiffness_gpa": [
+        1.8989,
+        2.3815,
+        2.4232
+      ],
+      "strength_mpa": [
+        13.148,
+        16.632,
+        14.144
+      ],
+      "lattice_id": 796798
+    },
+    "bounds": {
+      "stiffness_sum_max_gpa": 28.5,
+      "strength_max_mpa": 76.11
+    },
+    "message": "A stored lattice is within 10% of this target. The search should match quickly."
+  },
+  "round": 1,
+  "k": 100,
+  "rounds": [
+    {
+      "round": 1,
+      "k": 100,
+      "best_error_pct": 0.84,
+      "matched": true,
+      "n_candidates": 222,
+      "round_seconds": 34.58,
+      "elapsed_seconds": 34.58
+    }
+  ],
+  "infeasible": false,
+  "final_message": "Found 5 design(s) meeting every target."
+}

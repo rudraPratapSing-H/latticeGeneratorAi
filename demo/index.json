@@ -1,0 +1,47 @@
+[
+  {
+    "job_id": "j_demo_d1",
+    "label": "light, nearly isotropic",
+    "source_lattice_id": 127308,
+    "canonical": "{\"force\":false,\"material\":\"ti64\",\"modes\":{\"stiffness\":\"about\",\"strength\":\"at_least\",\"weight\":\"at_most\"},\"n_results\":5,\"part\":{\"cell_mm\":10.0,\"size_mm\":[40.0,40.0,40.0]},\"target\":{\"max_mass_g\":14.5,\"rel_density\":null,\"stiffness_gpa\":{\"x\":0.328,\"y\":0.351,\"z\":0.335},\"strength_mpa\":{\"x\":3.83,\"y\":3.07,\"z\":3.45},\"yield_strength_mpa\":null},\"tolerance_pct\":10.0}",
+    "model_hash": "3089556033a51774",
+    "best_error_pct": 2.53,
+    "rel_density": 0.05
+  },
+  {
+    "job_id": "j_demo_d2",
+    "label": "medium, nearly isotropic",
+    "source_lattice_id": 439738,
+    "canonical": "{\"force\":false,\"material\":\"ti64\",\"modes\":{\"stiffness\":\"about\",\"strength\":\"at_least\",\"weight\":\"at_most\"},\"n_results\":5,\"part\":{\"cell_mm\":10.0,\"size_mm\":[40.0,40.0,40.0]},\"target\":{\"max_mass_g\":43.4,\"rel_density\":null,\"stiffness_gpa\":{\"x\":1.15,\"y\":1.24,\"z\":1.24},\"strength_mpa\":{\"x\":8.1,\"y\":8.81,\"z\":8.23},\"yield_strength_mpa\":null},\"tolerance_pct\":10.0}",
+    "model_hash": "3089556033a51774",
+    "best_error_pct": 0.56,
+    "rel_density": 0.151
+  },
+  {
+    "job_id": "j_demo_d3",
+    "label": "dense, nearly isotropic",
+    "source_lattice_id": 796798,
+    "canonical": "{\"force\":false,\"material\":\"ti64\",\"modes\":{\"stiffness\":\"about\",\"strength\":\"at_least\",\"weight\":\"at_most\"},\"n_results\":5,\"part\":{\"cell_mm\":10.0,\"size_mm\":[40.0,40.0,40.0]},\"target\":{\"max_mass_g\":72.3,\"rel_density\":null,\"stiffness_gpa\":{\"x\":1.9,\"y\":2.38,\"z\":2.42},\"strength_mpa\":{\"x\":12.5,\"y\":15.8,\"z\":13.4},\"yield_strength_mpa\":null},\"tolerance_pct\":10.0}",
+    "model_hash": "3089556033a51774",
+    "best_error_pct": 0.84,
+    "rel_density": 0.24599
+  },
+  {
+    "job_id": "j_demo_d4",
+    "label": "medium, much stiffer in z",
+    "source_lattice_id": 740194,
+    "canonical": "{\"force\":false,\"material\":\"ti64\",\"modes\":{\"stiffness\":\"about\",\"strength\":\"at_least\",\"weight\":\"at_most\"},\"n_results\":5,\"part\":{\"cell_mm\":10.0,\"size_mm\":[40.0,40.0,40.0]},\"target\":{\"max_mass_g\":43.4,\"rel_density\":null,\"stiffness_gpa\":{\"x\":0.578,\"y\":0.595,\"z\":1.64},\"strength_mpa\":{\"x\":3.41,\"y\":2.31,\"z\":11.5},\"yield_strength_mpa\":null},\"tolerance_pct\":10.0}",
+    "model_hash": "3089556033a51774",
+    "best_error_pct": 5.12,
+    "rel_density": 0.09995
+  },
+  {
+    "job_id": "j_demo_d5",
+    "label": "medium, much stiffer in x",
+    "source_lattice_id": 121587,
+    "canonical": "{\"force\":false,\"material\":\"ti64\",\"modes\":{\"stiffness\":\"about\",\"strength\":\"at_least\",\"weight\":\"at_most\"},\"n_results\":5,\"part\":{\"cell_mm\":10.0,\"size_mm\":[40.0,40.0,40.0]},\"target\":{\"max_mass_g\":43.4,\"rel_density\":null,\"stiffness_gpa\":{\"x\":1.62,\"y\":0.306,\"z\":0.509},\"strength_mpa\":{\"x\":7.51,\"y\":2.06,\"z\":2.93},\"yield_strength_mpa\":null},\"tolerance_pct\":10.0}",
+    "model_hash": "3089556033a51774",
+    "best_error_pct": 0.79,
+    "rel_density": 0.15
+  }
+]

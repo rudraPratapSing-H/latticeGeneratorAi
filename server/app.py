@@ -35,7 +35,7 @@ try:
         ReachRequest,
         ReachResponse,
     )
-    from server import preflight
+    from server import demo, preflight
     from server.finalize import sanitize
     from server.picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from server.store import (
@@ -86,6 +86,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Create the job table, fail jobs a previous process left unfinished, warm up the engine in the background."""
     init_db()
     fail_stale_jobs()
+    demo.install()                                  # stored demo targets, so the demo works without the GPU
     threading.Thread(target=core.start_engine, name="engine-warmup", daemon=True).start()
     yield
 
@@ -192,7 +193,7 @@ async def post_reach(payload: ReachRequest) -> dict:
 async def create_design(payload: DesignRequest) -> dict[str, str]:
     """Check the request against the dataset, reuse an identical earlier job, otherwise queue it. Returns 202."""
     pre = await asyncio.get_running_loop().run_in_executor(None, preflight.run, payload)   # BadTarget -> 422
-    same = find_by_cache_key(pre.cache_key)
+    same = find_by_cache_key(pre.cache_key) or await asyncio.get_running_loop().run_in_executor(None, demo.find, payload)
     if same is not None:
         return same
     job_id = f"j_{uuid.uuid4().hex[:8]}"

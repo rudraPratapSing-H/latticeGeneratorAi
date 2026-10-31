@@ -1,0 +1,52 @@
+meta {
+  name: 10 Reach (is this target in the data?)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/reach
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40,
+        40,
+        40
+      ],
+      "cell_mm": 10
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 2.0,
+        "y": 1.7,
+        "z": 2.2
+      },
+      "strength_mpa": {
+        "x": 13,
+        "y": 12,
+        "z": 13
+      },
+      "rel_density": 0.15
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "about"
+    },
+    "tolerance_pct": 10
+  }
+}
+
+tests {
+  test("level, distance and nearest", function() { expect(res.status).to.equal(200); expect(["covered","extended","outside","infeasible"]).to.include(res.body.level); expect(res.body.nearest.stiffness_gpa.length).to.equal(3); expect(res.body.bounds.stiffness_sum_max_gpa).to.be.above(0); });
+}
+
+docs {
+  Picker result for a target before searching: level (covered within the tolerance / extended up to 25% / outside / infeasible), distance_pct, the chosen density, the nearest stored lattice's six values, and the bounds. It only suggests; it never changes your numbers.
+}

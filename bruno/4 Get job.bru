@@ -15,12 +15,15 @@ script:post-response {
 }
 
 tests {
-  test("200", function() { expect(res.status).to.equal(200); });
+  test("200 and the job fields", function() {
+    expect(res.status).to.equal(200);
+    ["status","progress","rounds","infeasible","warnings","reach","candidates"].forEach(function(k) { expect(res.body).to.have.property(k); });
+  });
   test("candidates are solver-verified when done", function() {
     if (res.body.status === "done") { expect(res.body.candidates.length).to.be.above(0); expect(res.body.candidates[0].verified).to.not.equal(null); }
   });
 }
 
 docs {
-  Send repeatedly until status is done or failed. Saves the top candidate id as {{designId}}. The response also echoes the request.
+  Send repeatedly until status is done, failed or cancelled. While queued, queue_position counts the jobs ahead. round / k show the current search round; rounds lists finished rounds (best_error_pct, matched). warnings holds plain-language notes; reach is the picker result. Saves the top candidate id as {{designId}}. The response also echoes the request.
 }

@@ -29,6 +29,7 @@ def test_health_endpoint(client):
         "model_loaded": False,
         "gpu": False,
         "solver_workers": 0,
+        "reason": "mock mode",
     }
 
 

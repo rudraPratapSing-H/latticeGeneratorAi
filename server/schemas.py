@@ -69,6 +69,7 @@ class HealthResponse(BaseModel):
     model_loaded: bool = False
     gpu: bool = False
     solver_workers: int = 0
+    reason: str | None = Field(default=None, description="Why the models are not loaded, and the fix; null when fine")
 
 
 class Material(BaseModel):
