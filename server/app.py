@@ -5,11 +5,11 @@ import json
 import os
 import uuid
 from collections.abc import AsyncGenerator
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -19,7 +19,7 @@ from sse_starlette.sse import EventSourceResponse
 import core
 
 try:
-    from server.jobs import active_sse_queues, run_pipeline
+    from server.jobs import QueueFull, runner
     from server.schemas import (
         AxisValues,
         Candidate,
@@ -36,9 +36,17 @@ try:
         ReachResponse,
     )
     from server.picker import BadTarget, material_or_raise, plausibility, reach_for_request
-    from server.store import DEFAULT_RUNS_DIR, create_job, fail_stale_jobs, get_job, init_db, save_request
+    from server.store import (
+        DEFAULT_RUNS_DIR,
+        create_job,
+        fail_stale_jobs,
+        get_job,
+        init_db,
+        save_request,
+        update_job_status,
+    )
 except ImportError:
-    from jobs import active_sse_queues, run_pipeline
+    from jobs import QueueFull, runner
     from schemas import (
         AxisValues,
         Candidate,
@@ -55,23 +63,26 @@ except ImportError:
         ReachResponse,
     )
     from picker import BadTarget, material_or_raise, plausibility, reach_for_request
-    from store import DEFAULT_RUNS_DIR, create_job, fail_stale_jobs, get_job, init_db, save_request
+    from store import (
+        DEFAULT_RUNS_DIR,
+        create_job,
+        fail_stale_jobs,
+        get_job,
+        init_db,
+        save_request,
+        update_job_status,
+    )
 
-# Initialize executor pools for physics solver and GPU search
-WORKERS = int(os.environ.get("WORKERS", max(1, (os.cpu_count() or 2) - 1)))
-process_pool = ProcessPoolExecutor(max_workers=WORKERS)
-thread_pool = ThreadPoolExecutor(max_workers=1)
+SSE_PING_S = float(os.environ.get("SSE_PING_S", "15"))     # heartbeat so proxies do not drop an idle stream
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Application lifespan context initializing SQLite on startup and cleaning up pools."""
+    """Create the job table, fail jobs a previous process left unfinished, warm up the engine in the background."""
     init_db()
     fail_stale_jobs()
-    asyncio.get_running_loop().run_in_executor(thread_pool, core.start_engine)   # warm up without blocking startup
+    threading.Thread(target=core.start_engine, name="engine-warmup", daemon=True).start()
     yield
-    process_pool.shutdown(wait=False)
-    thread_pool.shutdown(wait=False)
 
 
 app = FastAPI(
@@ -173,26 +184,16 @@ async def post_reach(payload: ReachRequest) -> dict:
     status_code=status.HTTP_202_ACCEPTED,
     response_model=JobCreateResponse,
 )
-async def create_design(
-    payload: DesignRequest,
-    background_tasks: BackgroundTasks,
-) -> dict[str, str]:
-    """Generate a UUID, insert job into SQLite, start background simulation, and return 202."""
+async def create_design(payload: DesignRequest) -> dict[str, str]:
+    """Validate, queue the job (one search runs at a time) and return 202 straight away."""
     job_id = f"j_{uuid.uuid4().hex[:8]}"
-
     save_request(job_id, payload.model_dump(mode="json"))
-    create_job(
-        job_id=job_id,
-        status="queued",
-        stage=None,
-        progress=0.0,
-        message="Job queued for processing",
-    )
-
-    if job_id not in active_sse_queues:
-        active_sse_queues[job_id] = asyncio.Queue()
-
-    background_tasks.add_task(run_pipeline, job_id, payload)
+    create_job(job_id=job_id, status="queued", stage=None, progress=0.0, message="Job queued for processing")
+    try:
+        runner.submit(job_id, payload)
+    except QueueFull as e:
+        update_job_status(job_id, status="failed", message=str(e))
+        raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "60"})
     return {"job_id": job_id, "status": "queued"}
 
 
@@ -208,12 +209,21 @@ async def get_job_endpoint(job_id: str) -> JobResponse:
     return JobResponse(**job_data)
 
 
+@app.post("/api/jobs/{job_id}/cancel")
+@app.delete("/api/jobs/{job_id}")
+async def cancel_job(job_id: str) -> dict:
+    """Stop a job: a queued job is cancelled at once, a running one after its current search round."""
+    job = runner.cancel(job_id)
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
+    return {"job_id": job_id, "status": job["status"], "message": job["message"]}
+
+
 @app.get("/api/jobs/{job_id}/events")
 async def get_job_events(job_id: str) -> EventSourceResponse:
-    """Server-Sent Events: one event whenever the job's stage, progress or message changes, then a final `close`.
-
-    Reads the job record, so any number of listeners (extra tabs, reconnects) see the same stream.
-    """
+    """Server-Sent Events: one event whenever the job's state changes, a comment ping every SSE_PING_S seconds,
+    then a final `close`. Reads the job record, so any number of listeners see the same stream. The page falls
+    back to polling GET /api/jobs/{id} every 2 s if the stream drops."""
     if get_job(job_id, include_candidates=False) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Job {job_id} not found")
 
@@ -223,22 +233,17 @@ async def get_job_events(job_id: str) -> EventSourceResponse:
             job = get_job(job_id, include_candidates=False)
             if job is None:
                 break
-            snap = {
-                "job_id": job_id,
-                "status": job["status"],
-                "stage": job["stage"],
-                "progress": job["progress"],
-                "message": job["message"],
-            }
+            snap = {k: job.get(k) for k in ("job_id", "status", "stage", "round", "k", "progress", "message",
+                                            "queue_position")}
             if snap != last:
                 last = snap
                 yield {"data": json.dumps(snap)}
-            if job["status"] in ("done", "failed"):
+            if job["status"] in ("done", "failed", "cancelled"):
                 yield {"event": "close", "data": json.dumps(snap)}
                 break
             await asyncio.sleep(0.5)
 
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(event_generator(), ping=SSE_PING_S)
 
 
 def _find_candidate_in_runs(design_id: str) -> Candidate | None:

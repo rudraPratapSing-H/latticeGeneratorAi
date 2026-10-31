@@ -1,4 +1,10 @@
-"""Persistence layer using SQLite and local filesystem storage for design jobs and candidate results."""
+"""Persistence: SQLite (WAL, one connection per call) for job state, JSON files per job for requests and results.
+
+runs/jobs.db            one row per job: status, stage, progress, message, and `meta` (JSON: round, k, rounds,
+                        infeasible, warnings, reach, cache_key, elapsed ...)
+runs/<job>/request.json the request as sent
+runs/<job>/results.json the ranked candidates
+"""
 
 from __future__ import annotations
 
@@ -13,25 +19,23 @@ from typing import Any
 DEFAULT_RUNS_DIR = Path(os.environ.get("RUNS_DIR") or Path(__file__).resolve().parent.parent / "runs")
 DEFAULT_DB_PATH = DEFAULT_RUNS_DIR / "jobs.db"
 
+FINISHED = ("done", "failed", "cancelled")
+
 
 def get_db_connection(db_path: str | Path = DEFAULT_DB_PATH) -> sqlite3.Connection:
-    """Create a configured SQLite connection with row access."""
+    """A fresh connection (never shared across threads) with row access and a busy timeout."""
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path), timeout=10.0)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 def init_db(db_path: str | Path = DEFAULT_DB_PATH) -> None:
-    """Set up the SQLite database file (runs/jobs.db) with the jobs table.
-
-    Columns: job_id (TEXT PK), status (TEXT), stage (TEXT), progress (REAL), message (TEXT), updated_at (TIMESTAMP).
-    """
-    path = Path(db_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    conn = get_db_connection(path)
+    """Create the jobs table (WAL mode); add the `meta` column to databases made before it existed."""
+    conn = get_db_connection(db_path)
     try:
+        conn.execute("PRAGMA journal_mode=WAL")
         with conn:
             conn.execute(
                 """
@@ -41,12 +45,21 @@ def init_db(db_path: str | Path = DEFAULT_DB_PATH) -> None:
                     stage TEXT,
                     progress REAL DEFAULT 0.0,
                     message TEXT,
-                    updated_at TIMESTAMP NOT NULL
+                    updated_at TIMESTAMP NOT NULL,
+                    meta TEXT
                 )
                 """
             )
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(jobs)")}
+        if "meta" not in cols:
+            with conn:
+                conn.execute("ALTER TABLE jobs ADD COLUMN meta TEXT")
     finally:
         conn.close()
+
+
+def _now() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 def create_job(
@@ -56,36 +69,25 @@ def create_job(
     progress: float = 0.0,
     message: str | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
+    meta: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Insert or replace a job record into SQLite."""
-    now_iso = datetime.now(UTC).isoformat()
+    """Insert (or reset) a job record."""
     conn = get_db_connection(db_path)
     try:
         with conn:
             conn.execute(
                 """
-                INSERT INTO jobs (job_id, status, stage, progress, message, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO jobs (job_id, status, stage, progress, message, updated_at, meta)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(job_id) DO UPDATE SET
-                    status = excluded.status,
-                    stage = excluded.stage,
-                    progress = excluded.progress,
-                    message = excluded.message,
-                    updated_at = excluded.updated_at
+                    status = excluded.status, stage = excluded.stage, progress = excluded.progress,
+                    message = excluded.message, updated_at = excluded.updated_at
                 """,
-                (job_id, status, stage, float(progress), message, now_iso),
+                (job_id, status, stage, float(progress), message, _now(), json.dumps(meta or {}, allow_nan=False)),
             )
     finally:
         conn.close()
-
-    return {
-        "job_id": job_id,
-        "status": status,
-        "stage": stage,
-        "progress": float(progress),
-        "message": message,
-        "updated_at": now_iso,
-    }
+    return get_job(job_id, db_path=db_path)
 
 
 def update_job_status(
@@ -95,66 +97,59 @@ def update_job_status(
     progress: float | None = None,
     message: str | None = None,
     db_path: str | Path = DEFAULT_DB_PATH,
+    meta: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
-    """Update job fields and updated_at timestamp in SQLite, inserting if missing."""
-    now_iso = datetime.now(UTC).isoformat()
+    """Update the given fields (and merge `meta`), inserting the row if it does not exist."""
     conn = get_db_connection(db_path)
     try:
-        # Check if record exists
-        row = conn.execute("SELECT job_id FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
-        if not row:
+        row = conn.execute("SELECT meta FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+        if row is None:
             conn.close()
-            return create_job(
-                job_id=job_id,
-                status=status or "running",
-                stage=stage,
-                progress=progress or 0.0,
-                message=message,
-                db_path=db_path,
-            )
-
-        fields: list[str] = []
-        params: list[Any] = []
-
-        if status is not None:
-            fields.append("status = ?")
-            params.append(status)
-        if stage is not None:
-            fields.append("stage = ?")
-            params.append(stage)
-        if progress is not None:
-            fields.append("progress = ?")
-            params.append(float(progress))
-        if message is not None:
-            fields.append("message = ?")
-            params.append(message)
-
+            return create_job(job_id, status or "running", stage, progress or 0.0, message, db_path, meta)
+        fields, params = [], []
+        for col, val in (("status", status), ("stage", stage), ("progress", None if progress is None else float(progress)),
+                         ("message", message)):
+            if val is not None:
+                fields.append(f"{col} = ?")
+                params.append(val)
+        if meta:
+            cur = json.loads(row["meta"] or "{}")
+            cur.update(meta)
+            fields.append("meta = ?")
+            params.append(json.dumps(cur, allow_nan=False))
         fields.append("updated_at = ?")
-        params.append(now_iso)
-        params.append(job_id)
-
+        params += [_now(), job_id]
         with conn:
-            conn.execute(
-                f"UPDATE jobs SET {', '.join(fields)} WHERE job_id = ?",
-                params,
-            )
+            conn.execute(f"UPDATE jobs SET {', '.join(fields)} WHERE job_id = ?", params)
     finally:
         conn.close()
-
     return get_job(job_id, db_path=db_path)
 
 
 def fail_stale_jobs(db_path: str | Path = DEFAULT_DB_PATH) -> int:
-    """At startup, mark jobs left queued/running by a previous server process as failed."""
+    """At startup, mark jobs left queued/running by a previous server process as failed (reason: restart)."""
     conn = get_db_connection(db_path)
     try:
         with conn:
-            cur = conn.execute(
-                "UPDATE jobs SET status = 'failed', message = 'Server restarted before this job finished', updated_at = ? "
-                "WHERE status IN ('queued', 'running')",
-                (datetime.now(UTC).isoformat(),),
-            )
-            return cur.rowcount
+            rows = conn.execute("SELECT job_id, meta FROM jobs WHERE status IN ('queued', 'running')").fetchall()
+            for r in rows:
+                meta = json.loads(r["meta"] or "{}")
+                meta["failure_reason"] = "restart"
+                conn.execute(
+                    "UPDATE jobs SET status = 'failed', message = ?, meta = ?, updated_at = ? WHERE job_id = ?",
+                    ("Server restarted before this job finished. Please retry.", json.dumps(meta), _now(), r["job_id"]))
+            return len(rows)
+    finally:
+        conn.close()
+
+
+def count_active(db_path: str | Path = DEFAULT_DB_PATH) -> tuple[int, int]:
+    """(running, queued) job counts."""
+    conn = get_db_connection(db_path)
+    try:
+        r = conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'running'").fetchone()[0]
+        q = conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'queued'").fetchone()[0]
+        return int(r), int(q)
     finally:
         conn.close()
 
@@ -174,36 +169,18 @@ def get_request(job_id: str, base_dir: str | Path = DEFAULT_RUNS_DIR) -> dict[st
         return None
 
 
-def save_meta(job_id: str, meta: dict[str, Any], base_dir: str | Path = DEFAULT_RUNS_DIR) -> None:
-    """Merge job extras (round, k, rounds, infeasible, warnings, reach) into runs/<job>/meta.json."""
-    d = Path(base_dir) / job_id
-    d.mkdir(parents=True, exist_ok=True)
-    cur = get_meta(job_id, base_dir)
-    cur.update(meta)
-    tmp = d / "meta.json.tmp"
-    tmp.write_text(json.dumps(cur, indent=2, allow_nan=False), encoding="utf-8")
-    tmp.replace(d / "meta.json")
-
-
-def get_meta(job_id: str, base_dir: str | Path = DEFAULT_RUNS_DIR) -> dict[str, Any]:
-    f = Path(base_dir) / job_id / "meta.json"
-    try:
-        return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
-
-
 def save_results(
     job_id: str,
     candidates: list[dict[str, Any]],
     base_dir: str | Path = DEFAULT_RUNS_DIR,
 ) -> Path:
-    """Save the final candidate JSON list to runs/{job_id}/results.json."""
+    """Save the final candidate JSON list to runs/{job_id}/results.json (written whole, then renamed)."""
     results_dir = Path(base_dir) / job_id
     results_dir.mkdir(parents=True, exist_ok=True)
     results_file = results_dir / "results.json"
-    with open(results_file, "w", encoding="utf-8") as f:
-        json.dump(candidates, f, indent=2, allow_nan=False)
+    tmp = results_dir / "results.json.tmp"
+    tmp.write_text(json.dumps(candidates, indent=2, allow_nan=False), encoding="utf-8")
+    tmp.replace(results_file)
     return results_file
 
 
@@ -228,29 +205,30 @@ def get_job(
     db_path: str | Path = DEFAULT_DB_PATH,
     include_candidates: bool = True,
 ) -> dict[str, Any] | None:
-    """Retrieve job details by job_id from SQLite, along with any saved candidates."""
+    """Job record with its meta merged in, queue_position for queued jobs, and (optionally) candidates."""
     conn = get_db_connection(db_path)
     try:
         row = conn.execute(
-            "SELECT job_id, status, stage, progress, message, updated_at FROM jobs WHERE job_id = ?",
+            "SELECT rowid AS rid, job_id, status, stage, progress, message, updated_at, meta FROM jobs WHERE job_id = ?",
             (job_id,),
         ).fetchone()
         if not row:
             return None
-        job_data = {
-            "job_id": row["job_id"],
-            "status": row["status"],
-            "stage": row["stage"],
-            "progress": float(row["progress"]) if row["progress"] is not None else 0.0,
-            "message": row["message"],
-            "updated_at": row["updated_at"],
-        }
+        job_data: dict[str, Any] = json.loads(row["meta"] or "{}")
+        job_data.update(
+            job_id=row["job_id"], status=row["status"], stage=row["stage"],
+            progress=float(row["progress"]) if row["progress"] is not None else 0.0,
+            message=row["message"], updated_at=row["updated_at"], queue_position=None,
+        )
+        if row["status"] == "queued":
+            ahead = conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'queued' AND rowid < ?", (row["rid"],)).fetchone()[0]
+            running = conn.execute("SELECT COUNT(*) FROM jobs WHERE status = 'running'").fetchone()[0]
+            job_data["queue_position"] = int(ahead + running)
     finally:
         conn.close()
 
-    runs_dir = Path(db_path).parent
-    job_data.update(get_meta(job_id, base_dir=runs_dir))
     if include_candidates:
+        runs_dir = Path(db_path).parent
         job_data["candidates"] = get_job_results(job_id, base_dir=runs_dir)
         job_data["request"] = get_request(job_id, base_dir=runs_dir)
 

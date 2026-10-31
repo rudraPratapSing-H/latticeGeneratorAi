@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from server.jobs import active_sse_queues, run_mock_pipeline
+from server.jobs import run_mock_pipeline
 from server.store import (
     create_job,
     get_db_connection,
@@ -127,7 +127,6 @@ async def test_run_mock_pipeline_execution():
     job_id = "j_mock_pipeline_test"
     create_job(job_id=job_id, status="queued")
 
-    active_sse_queues[job_id] = asyncio.Queue()
 
     # Run mock pipeline with very fast delay
     await run_mock_pipeline(
@@ -149,14 +148,3 @@ async def test_run_mock_pipeline_execution():
     assert results_file.exists()
     candidates = get_job_results(job_id)
     assert len(candidates) == 5
-
-    # Verify SSE queue received events for the 4 stages plus completion
-    received_events = []
-    while not active_sse_queues[job_id].empty():
-        received_events.append(await active_sse_queues[job_id].get())
-
-    stages_seen = [e.get("stage") for e in received_events if "stage" in e]
-    assert "search" in stages_seen
-    assert "repair" in stages_seen
-    assert "verify" in stages_seen
-    assert "rank" in stages_seen

@@ -4,9 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from server.app import process_pool, thread_pool
 from server.jobs import (
-    active_sse_queues,
     drop_geometric_duplicates,
     hash_lattice_edges,
     run_pipeline,
@@ -23,13 +21,6 @@ from server.schemas import (
     PartSpec,
 )
 from server.store import get_job, get_job_results, init_db
-
-
-def test_executors_initialization():
-    """Verify ThreadPool and ProcessPool executors in app.py."""
-    assert thread_pool._max_workers == 1
-    expected_workers = int(os.environ.get("WORKERS", max(1, (os.cpu_count() or 2) - 1)))
-    assert process_pool._max_workers == expected_workers
 
 
 def test_edge_hashing_and_deduplication():
@@ -89,7 +80,6 @@ async def test_mock_replays_stored_run_that_matched_in_round_one():
     """Targets near sample_3 (matched in round 1): one round, matches_targets true, real numbers."""
     job_id = "j_replay_match"
     init_db()
-    active_sse_queues[job_id] = asyncio.Queue()
     request = DesignRequest(material="ti64", part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
                             target=DesignTarget(stiffness_gpa=AxisValues(x=0.465, y=0.496, z=0.402),
                                                 strength_mpa=AxisValues(x=2.22, y=2.65, z=2.19), rel_density=0.05),
@@ -107,7 +97,6 @@ async def test_mock_replays_stored_run_that_needed_all_rounds_and_missed():
     """Targets near sample_7 (K=1000, no match): the rounds are reported and candidates say 'not a match'."""
     job_id = "j_replay_miss"
     init_db()
-    active_sse_queues[job_id] = asyncio.Queue()
     request = DesignRequest(material="ti64", part=PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0),
                             target=DesignTarget(stiffness_gpa=AxisValues(x=1.45, y=3.32, z=3.35),
                                                 strength_mpa=AxisValues(x=11.6, y=23.8, z=19.8), rel_density=0.25),
