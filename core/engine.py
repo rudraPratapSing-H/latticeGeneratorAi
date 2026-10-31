@@ -66,7 +66,8 @@ class Engine:
 
     def run(self, request: Any, on_progress: ProgressFn | None = None,
             should_stop: Callable[[], bool] | None = None, *, ladder=K_LADDER,
-            time_budget_s: float | None = None, request_echo: dict | None = None) -> dict[str, Any]:
+            time_budget_s: float | None = None, request_echo: dict | None = None,
+            search_kwargs: dict | None = None) -> dict[str, Any]:
         """Run the adaptive search for `request` (a server.schemas.DesignRequest, or a spec dict from
         server.units.to_search_spec). K = 100, 300, 1000; stops on a match, when a round gains under half a
         point, at the time budget, or when `should_stop()` returns True (checked between rounds)."""
@@ -123,7 +124,7 @@ class Engine:
         with self._lock:                                   # one search at a time on the GPU
             try:
                 cands, history = self._adaptive(sd, tg, rungs, budget, infeasible, on_round, log, should_stop,
-                                                solve_task)
+                                                solve_task, search_kwargs)
             except RuntimeError as e:                      # CUDA out of memory: retry once with half the starts
                 if "out of memory" not in str(e).lower():
                     raise
@@ -131,7 +132,7 @@ class Engine:
                 torch.cuda.empty_cache()
                 state.update(round=0, rungs=[max(10, k // 2) for k in rungs])
                 cands, history = self._adaptive(sd, tg, state["rungs"], budget, infeasible, on_round, log,
-                                                should_stop, solve_task)
+                                                should_stop, solve_task, search_kwargs)
         out = []
         for rank, c in enumerate(cands, 1):
             j = sd.to_candidate_json(c, tg, rank, spec["cell_mm"], spec.get("part_mm"))
@@ -142,12 +143,13 @@ class Engine:
                 "elapsed_seconds": round(time.time() - t0, 2),
                 "stopped": bool(should_stop and should_stop())}
 
-    def _adaptive(self, sd, tg, rungs, budget, infeasible, on_round, log, should_stop, task_fn):
+    def _adaptive(self, sd, tg, rungs, budget, infeasible, on_round, log, should_stop, task_fn, extra=None):
         s = self._s
         return sd.search_adaptive(
             s["vae"], s["cmod"], s["pred"], s["mask"], s["codes"], tg, s["device"], ladder=rungs,
             time_budget=budget, infeasible=infeasible, on_round=on_round, log=log, should_stop=should_stop,
-            steps=100, lr=0.002, executor=s.get("pool"), task_fn=task_fn, n_workers=s.get("workers", 1))
+            steps=100, lr=0.002, executor=s.get("pool"), task_fn=task_fn, n_workers=s.get("workers", 1),
+            **(extra or {}))
 
 
 def load_engine(model_dir: str | Path | None = None, device: str | None = None) -> Engine:

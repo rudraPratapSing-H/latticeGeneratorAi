@@ -155,6 +155,31 @@ class DesignRequest(BaseModel):
     n_results: int = Field(default=5, ge=1, le=20, description="Number of candidate lattice designs to return")
 
 
+class ReachRequest(BaseModel):
+    """POST /api/reach: a target to check against the dataset (part size only matters for a mass limit)."""
+    material: str = Field(..., description="Material ID, e.g. 'ti64'")
+    part: PartSpec = Field(default_factory=lambda: PartSpec(size_mm=[40.0, 40.0, 40.0], cell_mm=10.0))
+    target: DesignTarget
+    modes: DesignModes = Field(default_factory=DesignModes)
+    tolerance_pct: float = Field(default=10.0, gt=0, le=50)
+
+
+class Bounds(BaseModel):
+    stiffness_sum_max_gpa: float
+    strength_max_mpa: float
+
+
+class ReachResponse(BaseModel):
+    level: str = Field(..., description="covered | extended | outside | infeasible")
+    distance_pct: float
+    density: float
+    requested: dict
+    nearest: dict
+    bounds: Bounds
+    message: str
+    warnings: list[str] = Field(default_factory=list)
+
+
 CreateDesignRequest = DesignRequest
 DesignCreate = DesignRequest
 

@@ -13,6 +13,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sse_starlette.sse import EventSourceResponse
 
 import core
@@ -31,7 +32,10 @@ try:
         LatticeSpec,
         Material,
         PropertyEvaluation,
+        ReachRequest,
+        ReachResponse,
     )
+    from server.picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from server.store import DEFAULT_RUNS_DIR, create_job, fail_stale_jobs, get_job, init_db, save_request
 except ImportError:
     from jobs import active_sse_queues, run_pipeline
@@ -47,7 +51,10 @@ except ImportError:
         LatticeSpec,
         Material,
         PropertyEvaluation,
+        ReachRequest,
+        ReachResponse,
     )
+    from picker import BadTarget, material_or_raise, plausibility, reach_for_request
     from store import DEFAULT_RUNS_DIR, create_job, fail_stale_jobs, get_job, init_db, save_request
 
 # Initialize executor pools for physics solver and GPU search
@@ -74,11 +81,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+def _error_body(code: str, message: str, detail=None, **extra) -> dict:
+    """One error shape everywhere: {"error": {"code", "message"}}. `detail` is kept for older clients."""
+    return {"error": {"code": code, "message": message, **extra}, "detail": detail if detail is not None else message}
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request, exc: RequestValidationError) -> JSONResponse:
     """422 without echoing the raw input (a NaN in the input would make the default handler crash with a 500)."""
     errors = [{"loc": list(e["loc"]), "msg": e["msg"], "type": e["type"]} for e in exc.errors()]
-    return JSONResponse(status_code=422, content={"detail": errors})
+    first = errors[0] if errors else {"loc": [], "msg": "invalid request"}
+    where = ".".join(str(x) for x in first["loc"] if x != "body")
+    msg = f"{where}: {first['msg']}" if where else first["msg"]
+    return JSONResponse(status_code=422, content=_error_body("bad_target", msg, errors))
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error_handler(request, exc: StarletteHTTPException) -> JSONResponse:
+    code = {404: "not_found", 409: "conflict", 429: "queue_full", 503: "unavailable"}.get(exc.status_code, "error")
+    return JSONResponse(status_code=exc.status_code, content=_error_body(code, str(exc.detail)),
+                        headers=getattr(exc, "headers", None))
+
+
+@app.exception_handler(BadTarget)
+async def bad_target_handler(request, exc: BadTarget) -> JSONResponse:
+    return JSONResponse(status_code=422, content=_error_body(exc.code, exc.message, field=exc.field))
 
 
 # Initialize database at module load time as well
@@ -116,6 +143,29 @@ async def get_materials() -> list:
             "density_g_cm3": 4.43,
         }
     ]
+
+
+@app.get("/api/limits")
+async def get_limits(material: str = "ti64") -> dict:
+    """Per-density ranges the dataset covers for this material (form hints and validation)."""
+    from core import reach
+    m = material_or_raise(material)
+    try:
+        return reach.get_table().limits(m)
+    except reach.ReachUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@app.post("/api/reach", response_model=ReachResponse)
+async def post_reach(payload: ReachRequest) -> dict:
+    """Level (covered / extended / outside / infeasible), distance and the nearest achievable target."""
+    from core import reach
+    m = material_or_raise(payload.material)
+    plausibility(payload, m)
+    try:
+        return await asyncio.get_running_loop().run_in_executor(None, reach_for_request, payload, m)
+    except reach.ReachUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @app.post(
