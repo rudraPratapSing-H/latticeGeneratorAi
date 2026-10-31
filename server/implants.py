@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, Field
 
 from core import implant_plan, reach as reach_mod, zoning
 from core.profiles import describe
@@ -537,3 +538,18 @@ async def get_report(implant_id: str, job_id: str | None = None):
     idir(implant_id)
     folder, _ = finished_assembly(implant_id, job_id)
     return PlainTextResponse((folder / "report.md").read_text(encoding="utf-8"), media_type="text/markdown")
+
+
+# ------------------------------------------------------------------ description re-parse (Gemini when configured)
+class ParseRequest(BaseModel):
+    description: str = Field(..., max_length=4000)
+
+
+@router.post("/{implant_id}/parse")
+async def post_parse(implant_id: str, payload: ParseRequest) -> dict:
+    """Read a description again (for example after the user edited it). Returns the four fields only; nothing is stored until confirm."""
+    from server import describe_service
+    idir(implant_id)
+    parsed = await _bg(describe_service.parse, payload.description)
+    return {"fields": describe.clean_fields(parsed), "parsed_by": parsed.get("parsed_by", "offline"),
+            "parse_notes": parsed.get("notes", []), "gemini_configured": describe_service.gemini_enabled()}

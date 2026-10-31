@@ -294,3 +294,26 @@ def test_extruded_plates_and_clipped_solids_are_outward_oriented():
     stem = make_stem()
     c = meshing.clip_and_cap(stem, 20, 60)
     assert c.volume > 0 and c.is_watertight and c.is_winding_consistent
+
+
+# ---- plan failure-table rows not covered elsewhere
+def test_all_solid_case_is_explained_and_the_stiffness_jump_warning_names_the_plate(client):
+    heavy = {"implant_type": "hip stem", "body_weight_kg": 120, "activity": "high", "special_rules": ["history of falls"]}
+    _, t = confirmed(client, make_stem(), fields=heavy)
+    if all(z["kind"] == "solid" for z in t["zones"]):
+        assert any("Every zone is solid" in w for w in t["warnings"])
+    _, t2 = light_case(client)
+    jumps = [w for w in t2["warnings"] if "differ in stiffness" in w]
+    assert all("interface plate" in w for w in jumps)
+
+
+def test_loose_struts_are_removed_and_a_shattered_lattice_fails():
+    ua, ub = tiling.unit_cell_struts(lattice())
+    a, b = ua * 5.0, ub * 5.0
+    loose_a, loose_b = np.array([[40.0, 40, 40]]), np.array([[41.0, 40, 40]])
+    a2, b2, rep = tiling.remove_fragments(np.vstack([a, loose_a]), np.vstack([b, loose_b]))
+    assert rep["removed"] == 1 and len(a2) == len(a)                  # one loose strut is under 1% of the struts
+    pa = np.array([[i * 3.0, 0, 0] for i in range(10)])
+    pb = pa + [1.0, 0, 0]
+    _, _, rep2 = tiling.remove_fragments(pa, pb)                      # ten separate struts: no main part holds 90%
+    assert rep2["main_share"] < 0.9
