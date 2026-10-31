@@ -47,7 +47,8 @@ def wait(client, jid, states=("done", "failed", "cancelled"), timeout=30):
     raise AssertionError(f"job {jid} stuck: {j}")
 
 
-def test_jobs_run_one_at_a_time_in_order_with_queue_position(client):
+def test_jobs_run_one_at_a_time_in_order_with_queue_position(client, monkeypatch):
+    monkeypatch.setenv("MOCK_STAGE_DELAY", "0.8")          # long enough that a loaded machine still sees all three queued
     a, b, c = submit(client), submit(client), submit(client)
     seen_running, positions = [], {}
     deadline = time.time() + 30
