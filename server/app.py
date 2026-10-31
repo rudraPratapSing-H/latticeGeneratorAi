@@ -126,6 +126,10 @@ async def bad_target_handler(request, exc: BadTarget) -> JSONResponse:
     return JSONResponse(status_code=422, content=_error_body(exc.code, exc.message, field=exc.field, **exc.extra))
 
 
+from server.implants import router as implants_router  # noqa: E402
+
+app.include_router(implants_router)
+
 # Initialize database at module load time as well
 init_db()
 
