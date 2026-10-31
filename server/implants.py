@@ -20,6 +20,7 @@ from core.profiles import implant as profile
 from server import units
 from server.finalize import sanitize
 from server.implant_schemas import (
+    DISCLAIMER,
     AssembleRequest,
     ConfirmImplantRequest,
     CreateImplantResponse,
@@ -386,27 +387,78 @@ def assembly_summary(a) -> dict[str, Any]:
             "verification": {"geometry": "geometry_only"}}
 
 
+VERIFICATION = {
+    "solver_verified_infinite_lattice": "Stiffness and strength of each lattice zone's chosen cell, from the periodic beam solver (an infinite lattice).",
+    "beam_model_estimate": "Stiffness of a finite block of the zone with welded end plates, from a small beam model that reuses the solver's element code. An estimate.",
+    "geometry_only": "Mass, volume, strut and triangle counts, measured on the meshes. Not a solver result.",
+    "not_modelled": "Interface plates, the skin and anything outside the zones are not part of any stiffness or strength number.",
+}
+
+
+def build_result(implant_id: str, a, chosen: dict[str, dict[str, Any]], checks: dict[str, dict[str, Any]], stl_info: dict[str, Any]) -> dict[str, Any]:
+    d = idir(implant_id)
+    zt = read_json(d / "zones.json")
+    meta = read_json(d / "implant.json")
+    material = material_or_raise(meta["material"])
+    stats = {s["zone_id"]: s for s in a.zones}
+    zones = []
+    for z in zt["zones"]:
+        c = chosen.get(z["id"])
+        st = stats.get(z["id"], {})
+        zones.append({"id": z["id"], "name": z["name"], "range_mm": z["range_mm"], "kind": st.get("kind", z["kind"]), "stress_mpa": z["stress_mpa"],
+                      "requirement": z["requirement"], "candidate_id": c["id"] if c else None,
+                      "verified": ({"stiffness_gpa": c["verified"]["stiffness_gpa"], "strength_mpa": c["verified"]["strength_mpa"],
+                                    "rel_density": c["rel_density"], "label": "solver_verified_infinite_lattice"} if c else None),
+                      "check": checks.get(z["id"]), "geometry": {k: v for k, v in st.items() if k not in ("zone_id", "name", "kind")}})
+    vol = sum(float(abs(p.mesh.volume)) for p in a.parts)
+    lat_vol = sum(float(abs(p.mesh.volume)) for p in a.parts if p.kind == "lattice")
+    warnings = list(a.warnings) + stl_info.get("warnings", []) + [c["warning"] for c in checks.values() if c.get("warning")]
+    return {"implant_id": implant_id, "disclaimer": DISCLAIMER, "zones": zones, "load": zt["load"],
+            "summary": {"length_mm": a.length_mm, "cell_mm": a.cell_mm, "interface_mm": a.interface_mm, "sides": a.sides,
+                        "triangles": a.triangles, "volume_mm3": vol, "mass_g": vol / 1000.0 * material["density_g_cm3"],
+                        "lattice_share_pct": 100.0 * lat_vol / vol if vol else 0.0, "stl_bytes": stl_info["bytes"],
+                        "mass_label": "geometry_only"},
+            "notes": a.notes, "warnings": warnings, "parts": assembly_summary(a)["parts"], "verification": VERIFICATION}
+
+
 class AssembleTask:
-    """Runs on the job worker thread: tile -> assemble (T16 adds check and export). Cancel and progress work as for searches."""
+    """Runs on the job worker thread: tile -> assemble -> check -> export. Cancel and progress work as for searches."""
 
     def __init__(self, implant_id: str, chosen: dict[str, dict[str, Any]], interface_mm: float | None, sides: int) -> None:
         self.implant_id, self.chosen, self.interface_mm, self.sides = implant_id, chosen, interface_mm, sides
 
     def run(self, job_id: str, should_stop) -> None:
+        from core import check, export
         from core.assemble import AssemblyFailed
-        from server.store import update_job_status
+        from server.store import save_results, update_job_status
 
         def progress(stage: str, frac: float, msg: str) -> None:
             update_job_status(job_id, status="running", stage=stage, progress=frac, message=msg)
         try:
             a = build_assembly(self.implant_id, self.chosen, self.interface_mm, self.sides, progress, should_stop)
-            summary = assembly_summary(a)
+            material = material_or_raise(read_json(idir(self.implant_id) / "implant.json")["material"])
+            checks: dict[str, dict[str, Any]] = {}
+            lz = [s for s in a.zones if s["kind"] == "lattice"]
+            for n, st in enumerate(lz):
+                if should_stop():
+                    raise InterruptedError("cancelled")
+                progress("check", n / max(1, len(lz)), f"Checking {st['name']} with a small beam model")
+                c = self.chosen[st["zone_id"]]
+                try:
+                    checks[st["zone_id"]] = check.zone_check(c["lattice"], a.cell_mm, tuple(st["grid_cells"]), material["E_gpa"],
+                                                             c["verified"]["stiffness_gpa"]["z"])
+                except Exception as e:  # noqa: BLE001 - the estimate is optional; the geometry is still valid
+                    checks[st["zone_id"]] = {"label": check.LABEL, "stiffness_z_gpa": None,
+                                             "warning": f"The finite-block check could not run: {e}"}
+            progress("export", 0.0, "Writing the STL")
             out = idir(self.implant_id) / "assemblies" / job_id
-            write_json(out / "assembly.json", sanitize(summary))
-            from server.store import save_results
+            info = export.write_stl(a, out / "implant.stl")
+            result = sanitize(build_result(self.implant_id, a, self.chosen, checks, info))
+            write_json(out / "result.json", result)
+            (out / "report.md").write_text(export.report_markdown(result), encoding="utf-8")
             save_results(job_id, [])                       # marks the job as reusable for find_by_cache_key
-            update_job_status(job_id, status="done", stage="assemble", progress=1.0, message="Assembly finished",
-                              meta=sanitize({"summary": summary}))
+            update_job_status(job_id, status="done", stage="export", progress=1.0, message="Implant ready",
+                              meta=sanitize({"summary": result["summary"]}))
         except InterruptedError:
             update_job_status(job_id, status="cancelled", message="Cancelled.")
         except (AssemblyFailed, ValueError) as e:
@@ -445,3 +497,43 @@ async def post_assemble(implant_id: str, payload: AssembleRequest) -> dict:
         return await _bg(submit_assemble, implant_id, payload.model_dump())
     except QueueFull as e:
         raise HTTPException(status_code=429, detail=str(e), headers={"Retry-After": "60"})
+
+
+def finished_assembly(implant_id: str, job_id: str | None) -> tuple[Path, str]:
+    """Folder of a finished assembly job of this implant (the newest one when job_id is omitted)."""
+    from server.store import get_job
+    base = idir(implant_id) / "assemblies"
+    if job_id is None:
+        done = sorted(base.glob("*/result.json"), key=lambda p: p.stat().st_mtime) if base.exists() else []
+        if not done:
+            raise HTTPException(status_code=404, detail="No finished assembly for this implant yet.")
+        return done[-1].parent, done[-1].parent.name
+    job = get_job(job_id, include_candidates=False)
+    if job is None or job.get("implant_id") != implant_id or job.get("kind") != "assemble":
+        raise HTTPException(status_code=404, detail="Unknown assembly job for this implant.")
+    if job["status"] != "done":
+        raise HTTPException(status_code=409, detail=f"The assembly is {job['status']}, not finished.")
+    return base / job_id, job_id
+
+
+@router.get("/{implant_id}/result")
+async def get_result(implant_id: str, job_id: str | None = None) -> dict:
+    idir(implant_id)
+    folder, _ = finished_assembly(implant_id, job_id)
+    return await _bg(read_json, folder / "result.json")
+
+
+@router.get("/{implant_id}/export.stl")
+async def get_export_stl(implant_id: str, job_id: str | None = None):
+    from fastapi.responses import FileResponse
+    idir(implant_id)
+    folder, jid = finished_assembly(implant_id, job_id)
+    return FileResponse(folder / "implant.stl", media_type="model/stl", filename=f"implant_{implant_id}_{jid}.stl")
+
+
+@router.get("/{implant_id}/report")
+async def get_report(implant_id: str, job_id: str | None = None):
+    from fastapi.responses import PlainTextResponse
+    idir(implant_id)
+    folder, _ = finished_assembly(implant_id, job_id)
+    return PlainTextResponse((folder / "report.md").read_text(encoding="utf-8"), media_type="text/markdown")

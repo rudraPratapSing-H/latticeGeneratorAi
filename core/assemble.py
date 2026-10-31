@@ -130,7 +130,8 @@ def assemble(frame: trimesh.Trimesh, zones: list[dict[str, Any]], cell_mm: float
         length = float(np.linalg.norm(b - a, axis=1).sum())
         diameter = 2 * r
         st = zone_stats[zid]
-        st.update({"kind": "lattice", "cells": len(grids[zid].cells), "struts": int(len(a)), "strut_radius_mm": r,
+        gz = sorted({k for _, _, k in grids[zid].cells})
+        st.update({"kind": "lattice", "cells": len(grids[zid].cells), "grid_cells": [grids[zid].nx, grids[zid].ny, len(gz)], "struts": int(len(a)), "strut_radius_mm": r,
                    "strut_length_mm": length, "strut_volume_mm3": math.pi * r * r * length,
                    "rel_density": lat.get("rel_density"), "components": rep["components"], "removed_fragments": rep["removed"],
                    "main_share": rep["main_share"], "min_diameter_mm": diameter, "printable": diameter >= profile.GEOMETRY["min_strut_mm"]})

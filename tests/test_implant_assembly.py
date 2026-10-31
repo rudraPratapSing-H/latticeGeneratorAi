@@ -198,7 +198,7 @@ def test_assemble_job_runs_reports_progress_and_is_cached(client):
     assert job["status"] == "done", job
     assert job["kind"] == "assemble" and job["implant_id"] == iid
     s = job["summary"]
-    assert s["triangles"] > 0 and all(p["watertight"] for p in s["parts"]) and s["verification"]["geometry"] == "geometry_only"
+    assert s["triangles"] > 0 and s["mass_label"] == "geometry_only" and s["lattice_share_pct"] > 0
     again = client.post(f"/api/implants/{iid}/assemble", json=body).json()
     assert again["job_id"] == r.json()["job_id"]                  # same choices -> the finished job is reused
 
@@ -216,3 +216,81 @@ def test_assemble_failure_is_a_failed_job_with_a_message(client, monkeypatch):
     r = client.post(f"/api/implants/{iid}/assemble", json={"choices": {z["id"]: f"{jobs[z['id']]}_0" for z in lz}, "sides": 12})
     job = wait(client, r.json()["job_id"])
     assert job["status"] == "failed" and "fell apart" in job["message"]
+
+
+# ---- T16: result, STL, report, validator on three layouts
+from core import export  # noqa: E402
+from scripts.validate_implant_stl import validate  # noqa: E402
+
+
+def layouts():
+    lat = {**lattice(), "rel_density": 0.15}
+    bar = make_bar(length=60, width=20, depth=20)
+    stem = make_stem()
+    return {
+        "bar_lattice_solid_lattice": (bar, 10.0, [{"id": "z1", "name": "A", "range_mm": [0, 20], "kind": "lattice"},
+                                                  {"id": "z2", "name": "B", "range_mm": [20, 40], "kind": "solid"},
+                                                  {"id": "z3", "name": "C", "range_mm": [40, 60], "kind": "lattice"}], {"z1": lat, "z3": lat}),
+        "stem_two_lattice_zones": (stem, 6.0, [{"id": "z1", "name": "Tip", "range_mm": [0, 60], "kind": "solid"},
+                                               {"id": "z2", "name": "Mid", "range_mm": [60, 108], "kind": "lattice"},
+                                               {"id": "z3", "name": "Upper", "range_mm": [108, 160], "kind": "solid"}], {"z2": lat}),
+        "bar_four_zones_with_plates": (bar, 10.0, [{"id": "z1", "name": "A", "range_mm": [0, 10], "kind": "solid"},
+                                                   {"id": "z2", "name": "B", "range_mm": [10, 30], "kind": "lattice"},
+                                                   {"id": "z3", "name": "C", "range_mm": [30, 50], "kind": "lattice"},
+                                                   {"id": "z4", "name": "D", "range_mm": [50, 60], "kind": "solid"}], {"z2": lat, "z3": {**lat, "strut_radius_mm": lat["strut_radius_mm"] * 1.3}}),
+    }
+
+
+@pytest.mark.parametrize("name", ["bar_lattice_solid_lattice", "stem_two_lattice_zones", "bar_four_zones_with_plates"])
+def test_exported_stl_is_closed_oriented_and_opens_in_trimesh(tmp_path, name):
+    frame, cell, zones, lats = layouts()[name]
+    a = assemble.assemble(frame, zones, cell, lats)
+    info = export.write_stl(a, tmp_path / "implant.stl")
+    rep = validate(tmp_path / "implant.stl", expected_shells=len(a.parts))
+    assert rep["ok"], rep["problems"]
+    assert rep["triangles"] == info["triangles"] == a.triangles and rep["watertight"] and rep["winding_consistent"] and rep["finite"]
+    loaded = trimesh.load(str(tmp_path / "implant.stl"))                                     # also opens with the default loader
+    assert len(loaded.faces) == a.triangles
+
+
+def test_validator_catches_an_inverted_and_an_open_mesh(tmp_path):
+    box = trimesh.creation.box(extents=(5, 5, 5))
+    bad = box.copy()
+    bad.invert()
+    bad.export(tmp_path / "inv.stl")
+    assert not validate(tmp_path / "inv.stl")["ok"]
+    hole = trimesh.Trimesh(box.vertices, box.faces[2:], process=False)
+    hole.export(tmp_path / "open.stl")
+    assert not validate(tmp_path / "open.stl")["ok"]
+
+
+def test_full_api_flow_produces_result_stl_and_report(client):
+    iid, zt = light_case(client)
+    lz = [z for z in zt["zones"] if z["kind"] == "lattice"]
+    if not lz:
+        pytest.skip("no lattice zone")
+    jobs = seed_searches(iid)
+    r = client.post(f"/api/implants/{iid}/assemble", json={"choices": {z["id"]: f"{jobs[z['id']]}_0" for z in lz}})
+    job = wait(client, r.json()["job_id"])
+    assert job["status"] == "done", job
+    res = client.get(f"/api/implants/{iid}/result").json()
+    assert res["disclaimer"].startswith("Design demo") and set(res["verification"]) >= {"solver_verified_infinite_lattice", "beam_model_estimate", "geometry_only", "not_modelled"}
+    assert res["summary"]["mass_label"] == "geometry_only" and res["summary"]["mass_g"] > 0
+    z = next(z for z in res["zones"] if z["verified"])
+    assert z["verified"]["label"] == "solver_verified_infinite_lattice" and z["check"]["label"] == "beam_model_estimate"
+    assert "NaN" not in client.get(f"/api/implants/{iid}/result").text
+    stl = client.get(f"/api/implants/{iid}/export.stl")
+    assert stl.status_code == 200 and len(stl.content) == 84 + 50 * res["summary"]["triangles"]
+    rep = client.get(f"/api/implants/{iid}/report")
+    assert rep.status_code == 200 and "not a medical device" in rep.text and "beam_model_estimate" in rep.text
+    assert client.get(f"/api/implants/{iid}/result?job_id=nope").status_code == 404
+
+
+def test_extruded_plates_and_clipped_solids_are_outward_oriented():
+    import shapely
+    ring = shapely.geometry.box(0, 0, 10, 10).difference(shapely.geometry.box(3, 3, 6, 6))
+    m = meshing.extrude_polygon(ring, 0, 2)
+    assert m.volume == pytest.approx((100 - 9) * 2) and m.is_winding_consistent and m.is_watertight        # signed volume: positive = outward
+    stem = make_stem()
+    c = meshing.clip_and_cap(stem, 20, 60)
+    assert c.volume > 0 and c.is_watertight and c.is_winding_consistent

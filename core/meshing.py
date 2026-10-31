@@ -73,8 +73,8 @@ def extrude_polygon(poly: shapely.Geometry, z0: float, z1: float) -> trimesh.Tri
             area2 = (tri[1][0] - tri[0][0]) * (tri[2][1] - tri[0][1]) - (tri[2][0] - tri[0][0]) * (tri[1][1] - tri[0][1])
             if area2 < 0:
                 ids = [ids[0], ids[2], ids[1]]
-            faces.append([base + ids[0], base + ids[1], base + ids[2]])                      # top, +z
-            faces.append([base + n + ids[0], base + n + ids[2], base + n + ids[1]])         # bottom, -z
+            faces.append([base + n + ids[0], base + n + ids[1], base + n + ids[2]])         # top (z1, second layer), normal +z
+            faces.append([base + ids[0], base + ids[2], base + ids[1]])                      # bottom (z0, first layer), normal -z
         for r in rings:
             for k in range(len(r)):
                 p, q = (float(r[k][0]), float(r[k][1])), (float(r[(k + 1) % len(r)][0]), float(r[(k + 1) % len(r)][1]))
