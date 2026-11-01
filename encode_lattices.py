@@ -70,3 +70,4 @@ r2 = 1 - ((c_paper - S) ** 2).sum(0) / ((S - S.mean(0)) ** 2).sum(0)
 print("self-check, paper predictor vs stiffness-vec.csv (R2 %): " + ", ".join(f"{n} {100 * v:.2f}" for n, v in zip(names, r2)))
 np.savez_compressed(a.out, ids=ids.astype(np.int32), mu=mu, c_paper=c_paper)
 print(f"wrote {a.out}  codes {mu.shape}")
+

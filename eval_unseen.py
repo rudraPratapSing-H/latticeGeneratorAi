@@ -40,3 +40,4 @@ for name, m in (("A. its own held-out test lattices (never trained on)", np.isin
     rel = np.abs(p - t) / np.maximum(np.abs(t), 1e-12)
     print(f"stiffness (3 axial) all within 10%: {100*np.mean(rel[:, [0,3,5]].max(1) < .1):.1f}%   "
           f"all 9 stiffness: {100*np.mean(rel[:, :9].max(1) < .1):.1f}%   yield+buckling (6) all within 10%: {100*np.mean(rel[:, 9:].max(1) < .1):.1f}%")
+

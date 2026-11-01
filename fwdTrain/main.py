@@ -260,3 +260,4 @@ loss_record = pd.DataFrame(epoch_loss, columns = ['EPOCH' , 'Adj Train Loss', 'A
 loss_record.to_csv(loss_file, index=False, sep=',')
 
 
+

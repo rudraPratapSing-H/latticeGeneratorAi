@@ -31,3 +31,4 @@ print(f"lattices without all densities: {int((per != d['rho'].nunique()).sum())}
 print(d.groupby("rho")[["C1111", "C3333", "y_z", "b_z"]].median().round(5))
 d.to_csv(out, index=False)
 print(f"wrote {out}: {len(d)} rows")
+

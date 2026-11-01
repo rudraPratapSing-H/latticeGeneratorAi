@@ -166,3 +166,4 @@ def solve_lattice(adj, pos, flip=False, rho=RHO, debug=False):
     if debug:
         out['_dbg'] = (Fe, d, idx, N6)
     return out
+
