@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "queue_full",
+    "message": "1 jobs are already waiting; try again in a few minutes"
+  },
+  "detail": "1 jobs are already waiting; try again in a few minutes"
+}

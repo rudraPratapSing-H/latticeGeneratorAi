@@ -1,0 +1,72 @@
+{
+  "job_id": "j_9cbe0292",
+  "status": "queued",
+  "stage": null,
+  "round": null,
+  "k": null,
+  "progress": 0.0,
+  "message": "Job queued for processing",
+  "queue_position": 1,
+  "rounds": [],
+  "infeasible": false,
+  "warnings": [],
+  "skipped_invalid": 0,
+  "reach": {
+    "level": "covered",
+    "distance_pct": 0.06,
+    "density": 0.05,
+    "nearest": {
+      "stiffness_gpa": [
+        0.465,
+        0.4962,
+        0.4022
+      ],
+      "strength_mpa": [
+        2.219,
+        2.654,
+        2.194
+      ],
+      "lattice_id": 804255
+    },
+    "bounds": {
+      "stiffness_sum_max_gpa": 5.7,
+      "strength_max_mpa": 15.97
+    },
+    "message": "A stored lattice is within 10.5% of this target. The search should match quickly."
+  },
+  "candidates": [],
+  "request": {
+    "material": "ti64",
+    "part": {
+      "size_mm": [
+        40.0,
+        40.0,
+        40.0
+      ],
+      "cell_mm": 10.0
+    },
+    "target": {
+      "stiffness_gpa": {
+        "x": 0.465,
+        "y": 0.496,
+        "z": 0.402
+      },
+      "strength_mpa": {
+        "x": 2.22,
+        "y": 2.65,
+        "z": 2.19
+      },
+      "yield_strength_mpa": null,
+      "max_mass_g": null,
+      "rel_density": 0.05
+    },
+    "modes": {
+      "stiffness": "about",
+      "strength": "at_least",
+      "weight": "about"
+    },
+    "tolerance_pct": 10.5,
+    "n_results": 5,
+    "force": false
+  }
+}

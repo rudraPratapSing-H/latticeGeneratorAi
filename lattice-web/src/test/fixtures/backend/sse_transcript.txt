@@ -1,0 +1,25 @@
+data: {"job_id": "j_6c1439a3", "status": "running", "stage": "search", "round": null, "k": null, "progress": 0.02, "message": "Loading models...", "queue_position": null}
+
+: ping - 2026-10-31 16:13:20.314294+00:00
+
+: ping - 2026-10-31 16:13:20.529913+00:00
+
+data: {"job_id": "j_6c1439a3", "status": "running", "stage": "repair", "round": 1, "k": 100, "progress": 0.633, "message": "Round 1 of up to 1: Decoding and merging duplicates (replaying stored real output, sample_3.json)", "queue_position": null}
+
+: ping - 2026-10-31 16:13:20.745157+00:00
+
+: ping - 2026-10-31 16:13:20.946167+00:00
+
+data: {"job_id": "j_6c1439a3", "status": "running", "stage": "verify", "round": 1, "k": 100, "progress": 0.95, "message": "Round 1 of up to 1: Solver checking every design (replaying stored real output, sample_3.json)", "queue_position": null}
+
+: ping - 2026-10-31 16:13:21.125201+00:00
+
+: ping - 2026-10-31 16:13:21.328020+00:00
+
+: ping - 2026-10-31 16:13:21.529687+00:00
+
+data: {"job_id": "j_6c1439a3", "status": "done", "stage": "rank", "round": 1, "k": 100, "progress": 1.0, "message": "Found 5 design(s) meeting every target.", "queue_position": null}
+
+event: close
+data: {"job_id": "j_6c1439a3", "status": "done", "stage": "rank", "round": 1, "k": 100, "progress": 1.0, "message": "Found 5 design(s) meeting every target.", "queue_position": null}
+

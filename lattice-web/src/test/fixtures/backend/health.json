@@ -1,0 +1,7 @@
+{
+  "status": "ok",
+  "model_loaded": false,
+  "gpu": false,
+  "solver_workers": 0,
+  "reason": "mock mode"
+}

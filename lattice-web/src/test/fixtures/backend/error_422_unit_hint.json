@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "bad_target",
+    "message": "stiffness_gpa.x = 8000 GPa is above the material itself (114 GPa). Stiffness is in GPa; did you enter MPa?",
+    "field": "target.stiffness_gpa.x"
+  },
+  "detail": "stiffness_gpa.x = 8000 GPa is above the material itself (114 GPa). Stiffness is in GPa; did you enter MPa?"
+}

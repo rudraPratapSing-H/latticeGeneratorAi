@@ -1,0 +1,385 @@
+{
+  "implant_id": "i_48442fc4",
+  "state": "confirmed",
+  "length_mm": 160.0,
+  "cell_mm": 5.5,
+  "cell_range_mm": [
+    4.444444444444445,
+    5.90139
+  ],
+  "load": {
+    "cases": [
+      {
+        "name": "walking",
+        "force_n": 1112.454,
+        "angle_deg": 20.0
+      },
+      {
+        "name": "stumble",
+        "force_n": 2966.544,
+        "angle_deg": 25.0
+      }
+    ],
+    "governing": {
+      "name": "stumble",
+      "force_n": 2966.544,
+      "angle_deg": 25.0
+    },
+    "safety_factor": 1.5,
+    "supported_weight_kg": 37.8,
+    "assumptions": [
+      {
+        "name": "body weight",
+        "value": 45.0,
+        "unit": "kg",
+        "source": "description",
+        "todo": false
+      },
+      {
+        "name": "weight carried by the supporting leg itself",
+        "value": 0.16,
+        "unit": "of body weight",
+        "source": "placeholder",
+        "todo": true
+      },
+      {
+        "name": "activity",
+        "value": "sedentary",
+        "unit": "",
+        "source": "description",
+        "todo": false
+      },
+      {
+        "name": "design cases",
+        "value": "walking, stumble",
+        "unit": "",
+        "source": "placeholder",
+        "todo": true
+      },
+      {
+        "name": "safety factor",
+        "value": 1.5,
+        "unit": "",
+        "source": "placeholder",
+        "todo": true
+      }
+    ]
+  },
+  "zones": [
+    {
+      "id": "z1",
+      "name": "tip",
+      "range_mm": [
+        0.0,
+        44.0
+      ],
+      "thickness_mm": 20.0184,
+      "area_mm2": 442.65110446373416,
+      "stress_mpa": 169.49527951073276,
+      "cells": 8,
+      "bone_region": "tip",
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 12.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the tip (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 169.49527951073276,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        },
+        "max_mass_g": null
+      },
+      "reach": {
+        "level": "infeasible",
+        "distance_pct": 55.1,
+        "density": 0.25,
+        "message": "No lattice can reach this: a strength of 169.495 MPa is above the 76.1 MPa maximum at relative density 0.25. The closest achievable target is shown.",
+        "snapped": {
+          "stiffness_gpa": {
+            "x": 3.9728,
+            "y": 6.3895,
+            "z": 9.8593
+          },
+          "strength_mpa": {
+            "x": 30.667,
+            "y": 49.323,
+            "z": 76.107
+          },
+          "lattice_id": 783181
+        }
+      },
+      "kind": "solid",
+      "reason": "The strength this zone needs (169 MPa, with the safety factor) is above the most any lattice in the dataset reaches for this material (76.1 MPa), so it is solid."
+    },
+    {
+      "id": "z2",
+      "name": "mid stem 1",
+      "range_mm": [
+        44.0,
+        71.5
+      ],
+      "thickness_mm": 21.92262,
+      "area_mm2": 528.8999020098641,
+      "stress_mpa": 81.13779822585121,
+      "cells": 5,
+      "bone_region": "mid stem",
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 10.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the mid stem (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 81.13779822585121,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        },
+        "max_mass_g": null
+      },
+      "reach": {
+        "level": "infeasible",
+        "distance_pct": 6.2,
+        "density": 0.25,
+        "message": "No lattice can reach this: a strength of 81.1378 MPa is above the 76.1 MPa maximum at relative density 0.25. The closest achievable target is shown.",
+        "snapped": {
+          "stiffness_gpa": {
+            "x": 3.9728,
+            "y": 6.3895,
+            "z": 9.8593
+          },
+          "strength_mpa": {
+            "x": 30.667,
+            "y": 49.323,
+            "z": 76.107
+          },
+          "lattice_id": 783181
+        }
+      },
+      "kind": "solid",
+      "reason": "The strength this zone needs (81 MPa, with the safety factor) is above the most any lattice in the dataset reaches for this material (76.1 MPa), so it is solid."
+    },
+    {
+      "id": "z3",
+      "name": "mid stem 2",
+      "range_mm": [
+        71.5,
+        93.5
+      ],
+      "thickness_mm": 23.60556,
+      "area_mm2": 607.7672225497317,
+      "stress_mpa": 41.17797548183073,
+      "cells": 4,
+      "bone_region": "mid stem",
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 10.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the mid stem (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 41.17797548183073,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        },
+        "max_mass_g": null
+      },
+      "reach": {
+        "level": "covered",
+        "distance_pct": 0.09,
+        "density": 0.25,
+        "message": "A stored lattice is within 10% of this target. The search should match quickly.",
+        "snapped": {
+          "stiffness_gpa": {
+            "x": 2.6868,
+            "y": 6.3638,
+            "z": 9.9912
+          },
+          "strength_mpa": {
+            "x": 20.74,
+            "y": 35.895,
+            "z": 51.998
+          },
+          "lattice_id": 910626
+        }
+      },
+      "kind": "lattice",
+      "reason": "A stored lattice is within tolerance of this zone's targets."
+    },
+    {
+      "id": "z4",
+      "name": "neck",
+      "range_mm": [
+        93.5,
+        160.0
+      ],
+      "thickness_mm": 25.07794,
+      "area_mm2": 784.7831801002454,
+      "stress_mpa": 19.053103642715456,
+      "cells": 12,
+      "bone_region": "neck",
+      "requirement": {
+        "stiffness_gpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 4.0,
+            "source": "automatic",
+            "note": "bone stiffness placeholder for the neck (source: TODO)"
+          }
+        },
+        "strength_mpa": {
+          "x": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "y": {
+            "value": null,
+            "source": "automatic",
+            "note": null
+          },
+          "z": {
+            "value": 19.053103642715456,
+            "source": "automatic",
+            "note": "peak stress of the governing load case x safety factor"
+          }
+        },
+        "density": {
+          "value": null,
+          "source": "automatic",
+          "note": "lowest dataset density at which the zone is covered"
+        },
+        "max_mass_g": null
+      },
+      "reach": {
+        "level": "covered",
+        "distance_pct": 0.0,
+        "density": 0.15,
+        "message": "A stored lattice is within 10% of this target. The search should match quickly.",
+        "snapped": {
+          "stiffness_gpa": {
+            "x": 5.7166,
+            "y": 1.4486,
+            "z": 3.9998
+          },
+          "strength_mpa": {
+            "x": 32.391,
+            "y": 10.863,
+            "z": 22.793
+          },
+          "lattice_id": 459543
+        }
+      },
+      "kind": "solid",
+      "reason": "The description asks to keep the neck solid."
+    }
+  ],
+  "notes": [
+    "The boundary after tip moved from 42.0 to 44.0 mm to sit on the 5.5 mm cell grid.",
+    "The boundary after mid stem moved from 72.0 to 71.5 mm to sit on the 5.5 mm cell grid.",
+    "The boundary after mid stem moved from 92.0 to 93.5 mm to sit on the 5.5 mm cell grid.",
+    "The boundary after upper stem moved from 106.0 to 104.5 mm to sit on the 5.5 mm cell grid.",
+    "The boundary after neck moved from 158.0 to 159.5 mm to sit on the 5.5 mm cell grid.",
+    "neck would be 0.5 mm, under 3 cells, and was merged into neck.",
+    "upper stem would be 11.0 mm, under 3 cells, and was merged into neck."
+  ],
+  "warnings": [],
+  "disclaimer": "Design demo, not a medical device. Bone and load numbers are placeholders (source: TODO); nothing here is a clinical, safety or regulatory claim."
+}

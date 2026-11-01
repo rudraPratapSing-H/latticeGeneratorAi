@@ -1,0 +1,9 @@
+[
+  {
+    "id": "ti64",
+    "name": "Ti-6Al-4V",
+    "E_gpa": 114.0,
+    "yield_mpa": 880.0,
+    "density_g_cm3": 4.43
+  }
+]

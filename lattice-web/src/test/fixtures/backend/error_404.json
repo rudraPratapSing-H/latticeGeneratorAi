@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "not_found",
+    "message": "Job j_nope not found"
+  },
+  "detail": "Job j_nope not found"
+}

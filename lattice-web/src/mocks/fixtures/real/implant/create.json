@@ -1,0 +1,36 @@
+{
+  "implant_id": "i_48442fc4",
+  "mesh_report": {
+    "watertight": true,
+    "bodies": 1,
+    "size_mm": [
+      58.86276626586914,
+      30.0,
+      160.0
+    ],
+    "guessed_units": "mm",
+    "units_confident": true,
+    "volume_mm3": 99453.18323407452,
+    "axis_ratio": 3.9214985769541144,
+    "axis_ambiguous": false,
+    "repairs": [],
+    "warnings": []
+  },
+  "fields": {
+    "implant_type": "hip stem",
+    "body_weight_kg": 45.0,
+    "activity": "sedentary",
+    "special_rules": [
+      "Keep the neck solid"
+    ],
+    "force_n": null
+  },
+  "parsed_by": "offline",
+  "parse_notes": [],
+  "suggested": {
+    "units": "mm",
+    "axis": "auto",
+    "flip": false
+  },
+  "disclaimer": "Design demo, not a medical device. Bone and load numbers are placeholders (source: TODO); nothing here is a clinical, safety or regulatory claim."
+}

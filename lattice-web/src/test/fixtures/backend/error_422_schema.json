@@ -1,0 +1,16 @@
+{
+  "error": {
+    "code": "bad_target",
+    "message": "tolerance_pct: Input should be less than or equal to 50"
+  },
+  "detail": [
+    {
+      "loc": [
+        "body",
+        "tolerance_pct"
+      ],
+      "msg": "Input should be less than or equal to 50",
+      "type": "less_than_equal"
+    }
+  ]
+}

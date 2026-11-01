@@ -1,0 +1,2959 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Lattice Design ML/Physics Engine Backend",
+  "description": "Backend API for 3D lattice inverse design, surrogate property prediction, and physics verification.",
+  "version": "0.1.0"
+ },
+ "paths": {
+  "/api/implants": {
+   "post": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Post Implant",
+    "operationId": "post_implant_api_implants_post",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "$ref": "#/components/schemas/Body_post_implant_api_implants_post"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CreateImplantResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Implant",
+    "operationId": "get_implant_api_implants__implant_id__get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Get Implant Api Implants  Implant Id  Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/confirm": {
+   "post": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Post Confirm",
+    "operationId": "post_confirm_api_implants__implant_id__confirm_post",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ConfirmImplantRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ZoneTable"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/zones": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Zones",
+    "operationId": "get_zones_api_implants__implant_id__zones_get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ZoneTable"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Put Zones",
+    "operationId": "put_zones_api_implants__implant_id__zones_put",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ZoneEditRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ZoneTable"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/search": {
+   "post": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Post Search",
+    "operationId": "post_search_api_implants__implant_id__search_post",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Post Search Api Implants  Implant Id  Search Post"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/zones/{zone_id}/candidates": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Zone Candidates",
+    "operationId": "get_zone_candidates_api_implants__implant_id__zones__zone_id__candidates_get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     },
+     {
+      "name": "zone_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Zone Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Get Zone Candidates Api Implants  Implant Id  Zones  Zone Id  Candidates Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/assemble": {
+   "post": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Post Assemble",
+    "operationId": "post_assemble_api_implants__implant_id__assemble_post",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssembleRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Post Assemble Api Implants  Implant Id  Assemble Post"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/result": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Result",
+    "operationId": "get_result_api_implants__implant_id__result_get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     },
+     {
+      "name": "job_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Get Result Api Implants  Implant Id  Result Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/export.stl": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Export Stl",
+    "operationId": "get_export_stl_api_implants__implant_id__export_stl_get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     },
+     {
+      "name": "job_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/report": {
+   "get": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Get Report",
+    "operationId": "get_report_api_implants__implant_id__report_get",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     },
+     {
+      "name": "job_id",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/implants/{implant_id}/parse": {
+   "post": {
+    "tags": [
+     "implants"
+    ],
+    "summary": "Post Parse",
+    "description": "Read a description again (for example after the user edited it). Returns the four fields only; nothing is stored until confirm.",
+    "operationId": "post_parse_api_implants__implant_id__parse_post",
+    "parameters": [
+     {
+      "name": "implant_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Implant Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ParseRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Post Parse Api Implants  Implant Id  Parse Post"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/health": {
+   "get": {
+    "summary": "Get Health",
+    "description": "Backend service health check.",
+    "operationId": "get_health_api_health_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HealthResponse"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/materials": {
+   "get": {
+    "summary": "Get Materials",
+    "description": "List supported materials with mechanical properties.",
+    "operationId": "get_materials_api_materials_get",
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Material"
+         },
+         "type": "array",
+         "title": "Response Get Materials Api Materials Get"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/limits": {
+   "get": {
+    "summary": "Get Limits",
+    "description": "Per-density ranges the dataset covers for this material (form hints and validation).",
+    "operationId": "get_limits_api_limits_get",
+    "parameters": [
+     {
+      "name": "material",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string",
+       "default": "ti64",
+       "title": "Material"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Get Limits Api Limits Get"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/reach": {
+   "post": {
+    "summary": "Post Reach",
+    "description": "Level (covered / extended / outside / infeasible), distance and the nearest achievable target.",
+    "operationId": "post_reach_api_reach_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReachRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReachResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/designs": {
+   "post": {
+    "summary": "Create Design",
+    "description": "Check the request against the dataset, reuse an identical earlier job, otherwise queue it. Returns 202.",
+    "operationId": "create_design_api_designs_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DesignRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/JobCreateResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/jobs/{job_id}": {
+   "get": {
+    "summary": "Get Job Endpoint",
+    "description": "Query current status, stage, progress, and results of a design job from SQLite.",
+    "operationId": "get_job_endpoint_api_jobs__job_id__get",
+    "parameters": [
+     {
+      "name": "job_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/JobResponse"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   },
+   "delete": {
+    "summary": "Cancel Job",
+    "description": "Stop a job: a queued job is cancelled at once, a running one after its current search round.",
+    "operationId": "cancel_job_api_jobs__job_id__delete",
+    "parameters": [
+     {
+      "name": "job_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Cancel Job Api Jobs  Job Id  Delete"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/jobs/{job_id}/cancel": {
+   "post": {
+    "summary": "Cancel Job",
+    "description": "Stop a job: a queued job is cancelled at once, a running one after its current search round.",
+    "operationId": "cancel_job_api_jobs__job_id__cancel_post",
+    "parameters": [
+     {
+      "name": "job_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": true,
+         "title": "Response Cancel Job Api Jobs  Job Id  Cancel Post"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/jobs/{job_id}/events": {
+   "get": {
+    "summary": "Get Job Events",
+    "description": "Server-Sent Events: one event whenever the job's state changes, a comment ping every SSE_PING_S seconds,\nthen a final `close`. Reads the job record, so any number of listeners see the same stream. The page falls\nback to polling GET /api/jobs/{id} every 2 s if the stream drops.",
+    "operationId": "get_job_events_api_jobs__job_id__events_get",
+    "parameters": [
+     {
+      "name": "job_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Job Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/designs/{design_id}": {
+   "get": {
+    "summary": "Get Design",
+    "description": "Retrieve one saved candidate (lattice geometry, predicted and verified properties).",
+    "operationId": "get_design_api_designs__design_id__get",
+    "parameters": [
+     {
+      "name": "design_id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "title": "Design Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Successful Response",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Candidate"
+        }
+       }
+      }
+     },
+     "422": {
+      "description": "Validation Error",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "schemas": {
+   "AssembleRequest": {
+    "properties": {
+     "choices": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "type": "object",
+      "title": "Choices",
+      "description": "zone id -> candidate id, one per lattice zone"
+     },
+     "interface_mm": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 5.0,
+        "exclusiveMinimum": 0.1
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Interface Mm",
+      "description": "thickness of the solid plate between zones (default 0.6)"
+     },
+     "sides": {
+      "type": "integer",
+      "enum": [
+       8,
+       12
+      ],
+      "title": "Sides",
+      "default": 8
+     }
+    },
+    "type": "object",
+    "required": [
+     "choices"
+    ],
+    "title": "AssembleRequest"
+   },
+   "Assumption": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "string"
+       }
+      ],
+      "title": "Value"
+     },
+     "unit": {
+      "type": "string",
+      "title": "Unit",
+      "default": ""
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "description",
+       "default",
+       "placeholder",
+       "user"
+      ],
+      "title": "Source"
+     },
+     "todo": {
+      "type": "boolean",
+      "title": "Todo",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "value",
+     "source"
+    ],
+    "title": "Assumption"
+   },
+   "AxisNumbers": {
+    "properties": {
+     "x": {
+      "type": "number",
+      "title": "X"
+     },
+     "y": {
+      "type": "number",
+      "title": "Y"
+     },
+     "z": {
+      "type": "number",
+      "title": "Z"
+     }
+    },
+    "type": "object",
+    "required": [
+     "x",
+     "y",
+     "z"
+    ],
+    "title": "AxisNumbers"
+   },
+   "AxisSourced": {
+    "properties": {
+     "x": {
+      "$ref": "#/components/schemas/SourcedValue"
+     },
+     "y": {
+      "$ref": "#/components/schemas/SourcedValue"
+     },
+     "z": {
+      "$ref": "#/components/schemas/SourcedValue"
+     }
+    },
+    "type": "object",
+    "required": [
+     "x",
+     "y",
+     "z"
+    ],
+    "title": "AxisSourced"
+   },
+   "AxisValues": {
+    "properties": {
+     "x": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "X"
+     },
+     "y": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Y"
+     },
+     "z": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Z"
+     }
+    },
+    "type": "object",
+    "title": "AxisValues",
+    "description": "Directional 3D physical property values (axes can be None)."
+   },
+   "Body_post_implant_api_implants_post": {
+    "properties": {
+     "stl_file": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "title": "Stl File"
+     },
+     "material": {
+      "type": "string",
+      "title": "Material",
+      "default": "ti64"
+     },
+     "description": {
+      "type": "string",
+      "title": "Description",
+      "default": ""
+     }
+    },
+    "type": "object",
+    "required": [
+     "stl_file"
+    ],
+    "title": "Body_post_implant_api_implants_post"
+   },
+   "Bounds": {
+    "properties": {
+     "stiffness_sum_max_gpa": {
+      "type": "number",
+      "title": "Stiffness Sum Max Gpa"
+     },
+     "strength_max_mpa": {
+      "type": "number",
+      "title": "Strength Max Mpa"
+     }
+    },
+    "type": "object",
+    "required": [
+     "stiffness_sum_max_gpa",
+     "strength_max_mpa"
+    ],
+    "title": "Bounds"
+   },
+   "Candidate": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id",
+      "description": "Unique candidate identifier"
+     },
+     "rank": {
+      "type": "integer",
+      "minimum": 1.0,
+      "title": "Rank",
+      "description": "Ranking among candidate solutions"
+     },
+     "match_error_pct": {
+      "type": "number",
+      "title": "Match Error Pct",
+      "description": "Percentage error relative to target requirements"
+     },
+     "matches_targets": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Matches Targets",
+      "description": "True when the solver confirms every target"
+     },
+     "rel_density": {
+      "type": "number",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Rel Density",
+      "description": "Relative volume density fraction"
+     },
+     "mass_g": {
+      "type": "number",
+      "minimum": 0.0,
+      "title": "Mass G",
+      "description": "Total mass in grams"
+     },
+     "lattice": {
+      "$ref": "#/components/schemas/LatticeSpec",
+      "description": "Lattice structural geometry"
+     },
+     "predicted": {
+      "$ref": "#/components/schemas/PropertyEvaluation",
+      "description": "Properties predicted by the ML surrogate model"
+     },
+     "verified": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PropertyEvaluation"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Properties verified by the physics solver"
+     },
+     "source": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source",
+      "description": "generated (made by the search) or nearest_stored (a lattice from the dataset)"
+     },
+     "mass_estimate": {
+      "type": "boolean",
+      "title": "Mass Estimate",
+      "description": "mass_g is density x part volume x material density",
+      "default": true
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings",
+      "description": "Plain-language notes (printability, shortfall)"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "rank",
+     "match_error_pct",
+     "rel_density",
+     "mass_g",
+     "lattice",
+     "predicted"
+    ],
+    "title": "Candidate",
+    "description": "Candidate lattice design with topology, predicted, and verified properties."
+   },
+   "ConfirmImplantRequest": {
+    "properties": {
+     "units": {
+      "type": "string",
+      "enum": [
+       "mm",
+       "m",
+       "inch"
+      ],
+      "title": "Units"
+     },
+     "axis": {
+      "type": "string",
+      "enum": [
+       "auto",
+       "x",
+       "y",
+       "z"
+      ],
+      "title": "Axis",
+      "default": "auto"
+     },
+     "flip": {
+      "type": "boolean",
+      "title": "Flip",
+      "default": false
+     },
+     "body_index": {
+      "type": "integer",
+      "minimum": 0.0,
+      "title": "Body Index",
+      "default": 0
+     },
+     "fields": {
+      "$ref": "#/components/schemas/ImplantFields"
+     },
+     "cell_mm": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 50.0,
+        "exclusiveMinimum": 0.5
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cell Mm"
+     }
+    },
+    "type": "object",
+    "required": [
+     "units",
+     "fields"
+    ],
+    "title": "ConfirmImplantRequest"
+   },
+   "CreateImplantResponse": {
+    "properties": {
+     "implant_id": {
+      "type": "string",
+      "title": "Implant Id"
+     },
+     "mesh_report": {
+      "$ref": "#/components/schemas/MeshReport"
+     },
+     "fields": {
+      "$ref": "#/components/schemas/ImplantFields"
+     },
+     "parsed_by": {
+      "type": "string",
+      "enum": [
+       "offline",
+       "gemini"
+      ],
+      "title": "Parsed By",
+      "default": "offline"
+     },
+     "parse_notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Parse Notes"
+     },
+     "suggested": {
+      "$ref": "#/components/schemas/SuggestedFrame"
+     },
+     "disclaimer": {
+      "type": "string",
+      "title": "Disclaimer",
+      "default": "Design demo, not a medical device. Bone and load numbers are placeholders (source: TODO); nothing here is a clinical, safety or regulatory claim."
+     }
+    },
+    "type": "object",
+    "required": [
+     "implant_id",
+     "mesh_report",
+     "fields"
+    ],
+    "title": "CreateImplantResponse"
+   },
+   "DesignModes": {
+    "properties": {
+     "stiffness": {
+      "$ref": "#/components/schemas/TargetMode",
+      "default": "about"
+     },
+     "strength": {
+      "$ref": "#/components/schemas/TargetMode",
+      "default": "at_least"
+     },
+     "weight": {
+      "$ref": "#/components/schemas/TargetMode",
+      "default": "at_most"
+     }
+    },
+    "type": "object",
+    "title": "DesignModes",
+    "description": "Mode configurations for target criteria."
+   },
+   "DesignRequest": {
+    "properties": {
+     "material": {
+      "type": "string",
+      "title": "Material",
+      "description": "Material ID, e.g. 'ti64'"
+     },
+     "part": {
+      "$ref": "#/components/schemas/PartSpec",
+      "description": "Target part dimensions and cell sizing"
+     },
+     "target": {
+      "$ref": "#/components/schemas/DesignTarget",
+      "description": "Target physical properties"
+     },
+     "modes": {
+      "$ref": "#/components/schemas/DesignModes",
+      "description": "Optimization modes"
+     },
+     "tolerance_pct": {
+      "type": "number",
+      "maximum": 50.0,
+      "exclusiveMinimum": 0.0,
+      "title": "Tolerance Pct",
+      "description": "Allowed deviation percentage",
+      "default": 10.0
+     },
+     "n_results": {
+      "type": "integer",
+      "maximum": 20.0,
+      "minimum": 1.0,
+      "title": "N Results",
+      "description": "Number of candidate lattice designs to return",
+      "default": 5
+     },
+     "force": {
+      "type": "boolean",
+      "title": "Force",
+      "description": "Run even when the picker says no lattice can reach the target",
+      "default": false
+     }
+    },
+    "type": "object",
+    "required": [
+     "material",
+     "part",
+     "target"
+    ],
+    "title": "DesignRequest",
+    "description": "Request payload for initiating a lattice design search."
+   },
+   "DesignTarget": {
+    "properties": {
+     "stiffness_gpa": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TargetAxis"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "strength_mpa": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TargetAxis"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "yield_strength_mpa": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TargetAxis"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Advanced: first-yield strength instead of strength_mpa"
+     },
+     "max_mass_g": {
+      "anyOf": [
+       {
+        "type": "number",
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Mass G"
+     },
+     "rel_density": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 1.0,
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Rel Density",
+      "description": "Advanced: relative density instead of max_mass_g"
+     }
+    },
+    "type": "object",
+    "title": "DesignTarget",
+    "description": "Target performance criteria for the lattice optimization."
+   },
+   "FailureMode": {
+    "type": "string",
+    "enum": [
+     "yield",
+     "buckling"
+    ],
+    "title": "FailureMode",
+    "description": "Governing structural failure mode."
+   },
+   "FailureModeAxis": {
+    "properties": {
+     "x": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/FailureMode"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "y": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/FailureMode"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "z": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/FailureMode"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "title": "FailureModeAxis",
+    "description": "Governing failure mode per spatial axis (\"yield\", \"buckling\", or None)."
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "type": "array",
+      "title": "Detail"
+     }
+    },
+    "type": "object",
+    "title": "HTTPValidationError"
+   },
+   "HealthResponse": {
+    "properties": {
+     "status": {
+      "type": "string",
+      "title": "Status",
+      "default": "ok"
+     },
+     "model_loaded": {
+      "type": "boolean",
+      "title": "Model Loaded",
+      "default": false
+     },
+     "gpu": {
+      "type": "boolean",
+      "title": "Gpu",
+      "default": false
+     },
+     "solver_workers": {
+      "type": "integer",
+      "title": "Solver Workers",
+      "default": 0
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason",
+      "description": "Why the models are not loaded, and the fix; null when fine"
+     }
+    },
+    "type": "object",
+    "title": "HealthResponse",
+    "description": "Backend service health and readiness status."
+   },
+   "ImplantFields": {
+    "properties": {
+     "implant_type": {
+      "type": "string",
+      "title": "Implant Type",
+      "default": "unspecified"
+     },
+     "body_weight_kg": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 250.0,
+        "minimum": 20.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Body Weight Kg"
+     },
+     "activity": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "sedentary",
+         "low",
+         "moderate",
+         "active",
+         "high"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Activity"
+     },
+     "special_rules": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "maxItems": 8,
+      "title": "Special Rules"
+     },
+     "force_n": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 50000.0,
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Force N",
+      "description": "a joint force typed by the user; replaces the load model"
+     }
+    },
+    "type": "object",
+    "title": "ImplantFields",
+    "description": "What the description says. Never stiffness or strength numbers."
+   },
+   "JobCreateResponse": {
+    "properties": {
+     "job_id": {
+      "type": "string",
+      "title": "Job Id",
+      "description": "Unique generated job identifier"
+     },
+     "status": {
+      "$ref": "#/components/schemas/JobStatus",
+      "description": "Initial status of the queued job",
+      "default": "queued"
+     }
+    },
+    "type": "object",
+    "required": [
+     "job_id"
+    ],
+    "title": "JobCreateResponse",
+    "description": "Response returned upon successfully queueing a design job."
+   },
+   "JobResponse": {
+    "properties": {
+     "job_id": {
+      "type": "string",
+      "title": "Job Id",
+      "description": "Unique job identifier"
+     },
+     "status": {
+      "$ref": "#/components/schemas/JobStatus",
+      "description": "queued, running, done, failed or cancelled"
+     },
+     "stage": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/JobStage"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Current processing stage (search, repair, verify, rank)"
+     },
+     "round": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Round",
+      "description": "Current search round (1-based)"
+     },
+     "k": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "K",
+      "description": "Starting points in the current round"
+     },
+     "progress": {
+      "type": "number",
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Progress",
+      "description": "Completion progress from 0.0 to 1.0",
+      "default": 0.0
+     },
+     "message": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Message",
+      "description": "Informational or diagnostic status message"
+     },
+     "queue_position": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Queue Position",
+      "description": "0 = running next; None when not queued"
+     },
+     "rounds": {
+      "items": {
+       "$ref": "#/components/schemas/RoundInfo"
+      },
+      "type": "array",
+      "title": "Rounds",
+      "description": "Finished search rounds"
+     },
+     "infeasible": {
+      "type": "boolean",
+      "title": "Infeasible",
+      "description": "Stiffnesses add up to more than 1.05 x density x E_s",
+      "default": false
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings",
+      "description": "Plain-language warnings"
+     },
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind",
+      "description": "design (default) or assemble"
+     },
+     "implant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Implant Id",
+      "description": "set for jobs that belong to an implant"
+     },
+     "summary": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Summary",
+      "description": "assemble jobs: the assembly summary (geometry only; see verification)"
+     },
+     "zone_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Zone Id"
+     },
+     "skipped_invalid": {
+      "type": "integer",
+      "title": "Skipped Invalid",
+      "description": "Candidates dropped because the solver result was not physical",
+      "default": 0
+     },
+     "reach": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reach",
+      "description": "Dataset picker result for the request"
+     },
+     "candidates": {
+      "items": {
+       "$ref": "#/components/schemas/Candidate"
+      },
+      "type": "array",
+      "title": "Candidates",
+      "description": "List of generated lattice design candidates"
+     },
+     "request": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Request",
+      "description": "The request this job was started with"
+     }
+    },
+    "type": "object",
+    "required": [
+     "job_id",
+     "status"
+    ],
+    "title": "JobResponse",
+    "description": "Status and result response for a design job."
+   },
+   "JobStage": {
+    "type": "string",
+    "enum": [
+     "search",
+     "repair",
+     "verify",
+     "rank",
+     "tile",
+     "assemble",
+     "check",
+     "export"
+    ],
+    "title": "JobStage",
+    "description": "Processing stage of a running design job."
+   },
+   "JobStatus": {
+    "type": "string",
+    "enum": [
+     "queued",
+     "running",
+     "done",
+     "failed",
+     "cancelled"
+    ],
+    "title": "JobStatus",
+    "description": "Lifecycle status of a design search and verification job."
+   },
+   "LatticeSpec": {
+    "properties": {
+     "format": {
+      "type": "string",
+      "title": "Format",
+      "description": "Lattice representation format",
+      "default": "octant27"
+     },
+     "nodes": {
+      "items": {
+       "items": {
+        "type": "number"
+       },
+       "type": "array"
+      },
+      "type": "array",
+      "title": "Nodes",
+      "description": "Lattice node 3D coordinates [[x, y, z], ...]"
+     },
+     "edges": {
+      "items": {
+       "items": {
+        "type": "integer"
+       },
+       "type": "array"
+      },
+      "type": "array",
+      "title": "Edges",
+      "description": "Node connectivity graph edge pairs [[node_a, node_b], ...]"
+     },
+     "cell_size_mm": {
+      "type": "number",
+      "title": "Cell Size Mm",
+      "description": "Unit cell size in mm"
+     },
+     "strut_radius_mm": {
+      "type": "number",
+      "title": "Strut Radius Mm",
+      "description": "Strut radius in mm"
+     }
+    },
+    "type": "object",
+    "required": [
+     "nodes",
+     "edges",
+     "cell_size_mm",
+     "strut_radius_mm"
+    ],
+    "title": "LatticeSpec",
+    "description": "Lattice graph topology and structural specifications."
+   },
+   "LoadCaseOut": {
+    "properties": {
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "force_n": {
+      "type": "number",
+      "title": "Force N"
+     },
+     "angle_deg": {
+      "type": "number",
+      "title": "Angle Deg"
+     }
+    },
+    "type": "object",
+    "required": [
+     "name",
+     "force_n",
+     "angle_deg"
+    ],
+    "title": "LoadCaseOut"
+   },
+   "LoadSummary": {
+    "properties": {
+     "cases": {
+      "items": {
+       "$ref": "#/components/schemas/LoadCaseOut"
+      },
+      "type": "array",
+      "title": "Cases"
+     },
+     "governing": {
+      "$ref": "#/components/schemas/LoadCaseOut"
+     },
+     "safety_factor": {
+      "type": "number",
+      "title": "Safety Factor"
+     },
+     "supported_weight_kg": {
+      "type": "number",
+      "title": "Supported Weight Kg"
+     },
+     "assumptions": {
+      "items": {
+       "$ref": "#/components/schemas/Assumption"
+      },
+      "type": "array",
+      "title": "Assumptions"
+     }
+    },
+    "type": "object",
+    "required": [
+     "cases",
+     "governing",
+     "safety_factor",
+     "supported_weight_kg",
+     "assumptions"
+    ],
+    "title": "LoadSummary"
+   },
+   "Material": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id",
+      "description": "Unique material identifier, e.g. 'ti64'"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name",
+      "description": "Human-readable material name, e.g. 'Ti-6Al-4V'"
+     },
+     "E_gpa": {
+      "type": "number",
+      "title": "E Gpa",
+      "description": "Young's modulus in GPa"
+     },
+     "yield_mpa": {
+      "type": "number",
+      "title": "Yield Mpa",
+      "description": "Yield strength in MPa"
+     },
+     "density_g_cm3": {
+      "type": "number",
+      "title": "Density G Cm3",
+      "description": "Material density in g/cm\u00b3"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "E_gpa",
+     "yield_mpa",
+     "density_g_cm3"
+    ],
+    "title": "Material",
+    "description": "Physical and mechanical material definition."
+   },
+   "MeshReport": {
+    "properties": {
+     "watertight": {
+      "type": "boolean",
+      "title": "Watertight"
+     },
+     "bodies": {
+      "type": "integer",
+      "title": "Bodies"
+     },
+     "size_mm": {
+      "items": {
+       "type": "number"
+      },
+      "type": "array",
+      "title": "Size Mm",
+      "description": "extent along x, y, z of the chosen body, in the guessed units converted to mm"
+     },
+     "guessed_units": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Guessed Units",
+      "description": "mm, m or inch; null when the size fits none of them"
+     },
+     "units_confident": {
+      "type": "boolean",
+      "title": "Units Confident",
+      "default": false
+     },
+     "volume_mm3": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Volume Mm3"
+     },
+     "axis_ratio": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Axis Ratio",
+      "description": "sqrt of the two largest PCA eigenvalues; under 1.5 the axis is ambiguous"
+     },
+     "axis_ambiguous": {
+      "type": "boolean",
+      "title": "Axis Ambiguous",
+      "default": false
+     },
+     "repairs": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Repairs"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings"
+     }
+    },
+    "type": "object",
+    "required": [
+     "watertight",
+     "bodies",
+     "size_mm"
+    ],
+    "title": "MeshReport"
+   },
+   "ParseRequest": {
+    "properties": {
+     "description": {
+      "type": "string",
+      "maxLength": 4000,
+      "title": "Description"
+     }
+    },
+    "type": "object",
+    "required": [
+     "description"
+    ],
+    "title": "ParseRequest"
+   },
+   "PartSpec": {
+    "properties": {
+     "size_mm": {
+      "items": {
+       "type": "number"
+      },
+      "type": "array",
+      "maxItems": 3,
+      "minItems": 3,
+      "title": "Size Mm",
+      "description": "Bounding dimensions [x, y, z] in mm"
+     },
+     "cell_mm": {
+      "type": "number",
+      "exclusiveMinimum": 0.0,
+      "title": "Cell Mm",
+      "description": "Unit cell dimension in mm"
+     }
+    },
+    "type": "object",
+    "required": [
+     "size_mm",
+     "cell_mm"
+    ],
+    "title": "PartSpec",
+    "description": "Geometry specification for the target lattice part."
+   },
+   "PropertyEvaluation": {
+    "properties": {
+     "stiffness_gpa": {
+      "$ref": "#/components/schemas/AxisValues",
+      "description": "Stiffness along x, y, z in GPa"
+     },
+     "yield_strength_mpa": {
+      "$ref": "#/components/schemas/AxisValues",
+      "description": "Yield strength along x, y, z in MPa"
+     },
+     "buckling_strength_mpa": {
+      "$ref": "#/components/schemas/AxisValues",
+      "description": "Buckling strength along x, y, z in MPa"
+     },
+     "strength_mpa": {
+      "$ref": "#/components/schemas/AxisValues",
+      "description": "Effective strength along x, y, z in MPa"
+     },
+     "governing_failure": {
+      "$ref": "#/components/schemas/FailureModeAxis",
+      "description": "Governing failure mode along x, y, z ('yield' or 'buckling')"
+     }
+    },
+    "type": "object",
+    "required": [
+     "stiffness_gpa",
+     "yield_strength_mpa",
+     "buckling_strength_mpa",
+     "strength_mpa",
+     "governing_failure"
+    ],
+    "title": "PropertyEvaluation",
+    "description": "Directional mechanical and failure evaluations."
+   },
+   "ReachRequest": {
+    "properties": {
+     "material": {
+      "type": "string",
+      "title": "Material",
+      "description": "Material ID, e.g. 'ti64'"
+     },
+     "part": {
+      "$ref": "#/components/schemas/PartSpec"
+     },
+     "target": {
+      "$ref": "#/components/schemas/DesignTarget"
+     },
+     "modes": {
+      "$ref": "#/components/schemas/DesignModes"
+     },
+     "tolerance_pct": {
+      "type": "number",
+      "maximum": 50.0,
+      "exclusiveMinimum": 0.0,
+      "title": "Tolerance Pct",
+      "default": 10.0
+     }
+    },
+    "type": "object",
+    "required": [
+     "material",
+     "target"
+    ],
+    "title": "ReachRequest",
+    "description": "POST /api/reach: a target to check against the dataset (part size only matters for a mass limit)."
+   },
+   "ReachResponse": {
+    "properties": {
+     "level": {
+      "type": "string",
+      "title": "Level",
+      "description": "covered | extended | outside | infeasible"
+     },
+     "distance_pct": {
+      "type": "number",
+      "title": "Distance Pct"
+     },
+     "density": {
+      "type": "number",
+      "title": "Density"
+     },
+     "requested": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Requested"
+     },
+     "nearest": {
+      "additionalProperties": true,
+      "type": "object",
+      "title": "Nearest"
+     },
+     "bounds": {
+      "$ref": "#/components/schemas/Bounds"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings"
+     },
+     "conflict": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Conflict",
+      "description": "The value hardest to match, when no stored lattice is close"
+     }
+    },
+    "type": "object",
+    "required": [
+     "level",
+     "distance_pct",
+     "density",
+     "requested",
+     "nearest",
+     "bounds",
+     "message"
+    ],
+    "title": "ReachResponse"
+   },
+   "RoundInfo": {
+    "properties": {
+     "round": {
+      "type": "integer",
+      "title": "Round"
+     },
+     "k": {
+      "type": "integer",
+      "title": "K"
+     },
+     "best_error_pct": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Best Error Pct"
+     },
+     "matched": {
+      "type": "boolean",
+      "title": "Matched",
+      "default": false
+     },
+     "n_candidates": {
+      "type": "integer",
+      "title": "N Candidates",
+      "default": 0
+     },
+     "round_seconds": {
+      "type": "number",
+      "title": "Round Seconds",
+      "default": 0.0
+     },
+     "elapsed_seconds": {
+      "type": "number",
+      "title": "Elapsed Seconds",
+      "default": 0.0
+     }
+    },
+    "type": "object",
+    "required": [
+     "round",
+     "k"
+    ],
+    "title": "RoundInfo",
+    "description": "One search round, as the engine reports it (best_error_pct is already in percent)."
+   },
+   "SourcedValue": {
+    "properties": {
+     "value": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Value"
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "requested",
+       "adjusted",
+       "predicted",
+       "verified",
+       "stored",
+       "estimate",
+       "automatic"
+      ],
+      "title": "Source",
+      "default": "automatic"
+     },
+     "note": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Note"
+     }
+    },
+    "type": "object",
+    "title": "SourcedValue"
+   },
+   "SuggestedFrame": {
+    "properties": {
+     "units": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Units"
+     },
+     "axis": {
+      "type": "string",
+      "enum": [
+       "auto",
+       "x",
+       "y",
+       "z"
+      ],
+      "title": "Axis",
+      "default": "auto"
+     },
+     "flip": {
+      "type": "boolean",
+      "title": "Flip",
+      "default": false
+     }
+    },
+    "type": "object",
+    "title": "SuggestedFrame"
+   },
+   "TargetAxis": {
+    "properties": {
+     "x": {
+      "anyOf": [
+       {
+        "type": "number",
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "X"
+     },
+     "y": {
+      "anyOf": [
+       {
+        "type": "number",
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Y"
+     },
+     "z": {
+      "anyOf": [
+       {
+        "type": "number",
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Z"
+     }
+    },
+    "type": "object",
+    "title": "TargetAxis",
+    "description": "Per-axis target: positive finite numbers, or null to ignore that axis."
+   },
+   "TargetMode": {
+    "type": "string",
+    "enum": [
+     "about",
+     "at_least",
+     "at_most",
+     "exact",
+     "minimize",
+     "maximize"
+    ],
+    "title": "TargetMode",
+    "description": "Optimization target comparison mode."
+   },
+   "ValidationError": {
+    "properties": {
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "type": "array",
+      "title": "Location"
+     },
+     "msg": {
+      "type": "string",
+      "title": "Message"
+     },
+     "type": {
+      "type": "string",
+      "title": "Error Type"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "ctx": {
+      "type": "object",
+      "title": "Context"
+     }
+    },
+    "type": "object",
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError"
+   },
+   "Zone": {
+    "properties": {
+     "id": {
+      "type": "string",
+      "title": "Id"
+     },
+     "name": {
+      "type": "string",
+      "title": "Name"
+     },
+     "range_mm": {
+      "items": {
+       "type": "number"
+      },
+      "type": "array",
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "Range Mm",
+      "description": "axial range, tip = 0, snapped to the cell grid"
+     },
+     "thickness_mm": {
+      "type": "number",
+      "title": "Thickness Mm"
+     },
+     "area_mm2": {
+      "type": "number",
+      "title": "Area Mm2"
+     },
+     "stress_mpa": {
+      "type": "number",
+      "title": "Stress Mpa",
+      "description": "design stress: peak stress of the governing load case x safety factor"
+     },
+     "cells": {
+      "type": "integer",
+      "title": "Cells",
+      "description": "whole cells along the axis in this zone"
+     },
+     "bone_region": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bone Region"
+     },
+     "requirement": {
+      "$ref": "#/components/schemas/ZoneRequirement"
+     },
+     "reach": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ZoneReach"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "kind": {
+      "type": "string",
+      "enum": [
+       "lattice",
+       "solid",
+       "undecided"
+      ],
+      "title": "Kind"
+     },
+     "reason": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Reason"
+     }
+    },
+    "type": "object",
+    "required": [
+     "id",
+     "name",
+     "range_mm",
+     "thickness_mm",
+     "area_mm2",
+     "stress_mpa",
+     "cells",
+     "requirement",
+     "kind"
+    ],
+    "title": "Zone"
+   },
+   "ZoneEdit": {
+    "properties": {
+     "id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     },
+     "range_mm": {
+      "items": {
+       "type": "number"
+      },
+      "type": "array",
+      "maxItems": 2,
+      "minItems": 2,
+      "title": "Range Mm"
+     },
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "lattice",
+         "solid"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind"
+     },
+     "stiffness_z": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 200.0,
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Stiffness Z"
+     },
+     "strength_z": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 5000.0,
+        "exclusiveMinimum": 0.0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Strength Z"
+     }
+    },
+    "type": "object",
+    "required": [
+     "range_mm"
+    ],
+    "title": "ZoneEdit"
+   },
+   "ZoneEditRequest": {
+    "properties": {
+     "zones": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/ZoneEdit"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Zones"
+     },
+     "cell_mm": {
+      "anyOf": [
+       {
+        "type": "number",
+        "maximum": 50.0,
+        "exclusiveMinimum": 0.5
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cell Mm"
+     }
+    },
+    "type": "object",
+    "title": "ZoneEditRequest"
+   },
+   "ZoneReach": {
+    "properties": {
+     "level": {
+      "type": "string",
+      "enum": [
+       "covered",
+       "extended",
+       "outside",
+       "infeasible"
+      ],
+      "title": "Level"
+     },
+     "distance_pct": {
+      "type": "number",
+      "title": "Distance Pct"
+     },
+     "density": {
+      "type": "number",
+      "title": "Density"
+     },
+     "message": {
+      "type": "string",
+      "title": "Message"
+     },
+     "snapped": {
+      "$ref": "#/components/schemas/ZoneSnapped"
+     }
+    },
+    "type": "object",
+    "required": [
+     "level",
+     "distance_pct",
+     "density",
+     "message",
+     "snapped"
+    ],
+    "title": "ZoneReach"
+   },
+   "ZoneRequirement": {
+    "properties": {
+     "stiffness_gpa": {
+      "$ref": "#/components/schemas/AxisSourced"
+     },
+     "strength_mpa": {
+      "$ref": "#/components/schemas/AxisSourced"
+     },
+     "density": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SourcedValue"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "max_mass_g": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SourcedValue"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "type": "object",
+    "required": [
+     "stiffness_gpa",
+     "strength_mpa"
+    ],
+    "title": "ZoneRequirement"
+   },
+   "ZoneSnapped": {
+    "properties": {
+     "stiffness_gpa": {
+      "$ref": "#/components/schemas/AxisNumbers"
+     },
+     "strength_mpa": {
+      "$ref": "#/components/schemas/AxisNumbers"
+     },
+     "lattice_id": {
+      "type": "integer",
+      "title": "Lattice Id"
+     }
+    },
+    "type": "object",
+    "required": [
+     "stiffness_gpa",
+     "strength_mpa",
+     "lattice_id"
+    ],
+    "title": "ZoneSnapped"
+   },
+   "ZoneTable": {
+    "properties": {
+     "implant_id": {
+      "type": "string",
+      "title": "Implant Id"
+     },
+     "state": {
+      "type": "string",
+      "enum": [
+       "uploaded",
+       "confirmed"
+      ],
+      "title": "State"
+     },
+     "length_mm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Length Mm"
+     },
+     "cell_mm": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cell Mm"
+     },
+     "cell_range_mm": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "number"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cell Range Mm"
+     },
+     "load": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/LoadSummary"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "zones": {
+      "items": {
+       "$ref": "#/components/schemas/Zone"
+      },
+      "type": "array",
+      "title": "Zones"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Notes"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "type": "array",
+      "title": "Warnings"
+     },
+     "disclaimer": {
+      "type": "string",
+      "title": "Disclaimer",
+      "default": "Design demo, not a medical device. Bone and load numbers are placeholders (source: TODO); nothing here is a clinical, safety or regulatory claim."
+     }
+    },
+    "type": "object",
+    "required": [
+     "implant_id",
+     "state"
+    ],
+    "title": "ZoneTable"
+   }
+  }
+ }
+}

@@ -1,0 +1,8 @@
+{
+  "error": {
+    "code": "unknown_material",
+    "message": "unknown material 'zzz'. Available: ti64",
+    "field": "material"
+  },
+  "detail": "unknown material 'zzz'. Available: ti64"
+}

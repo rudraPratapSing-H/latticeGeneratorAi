@@ -1,0 +1,40 @@
+{
+  "error": {
+    "code": "bad_target",
+    "message": "No lattice can reach this: the three stiffnesses add up to 60.00 GPa, but at relative density 0.15 no lattice can exceed about 17.10 GPa in total. The closest achievable target is shown. Nearest achievable target at relative density 0.15: stiffness [5.7, 5.7, 5.7] GPa, strength [44.0, 44.0, 44.0] MPa. Send force: true to search anyway.",
+    "field": "target",
+    "reach": {
+      "level": "infeasible",
+      "distance_pct": 71.5,
+      "density": 0.15,
+      "requested": {
+        "stiffness_gpa": [
+          20.0,
+          20.0,
+          20.0
+        ],
+        "strength_mpa": null
+      },
+      "nearest": {
+        "stiffness_gpa": [
+          5.7,
+          5.7,
+          5.7
+        ],
+        "strength_mpa": [
+          44.0,
+          44.0,
+          44.0
+        ],
+        "lattice_id": 0
+      },
+      "bounds": {
+        "stiffness_sum_max_gpa": 17.1,
+        "strength_max_mpa": 45.28
+      },
+      "warnings": [],
+      "message": "No lattice can reach this: the three stiffnesses add up to 60.00 GPa, but at relative density 0.15 no lattice can exceed about 17.10 GPa in total. The closest achievable target is shown."
+    }
+  },
+  "detail": "No lattice can reach this: the three stiffnesses add up to 60.00 GPa, but at relative density 0.15 no lattice can exceed about 17.10 GPa in total. The closest achievable target is shown. Nearest achievable target at relative density 0.15: stiffness [5.7, 5.7, 5.7] GPa, strength [44.0, 44.0, 44.0] MPa. Send force: true to search anyway."
+}

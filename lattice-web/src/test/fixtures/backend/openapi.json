@@ -1,0 +1,1355 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lattice Design ML/Physics Engine Backend",
+    "description": "Backend API for 3D lattice inverse design, surrogate property prediction, and physics verification.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Get Health",
+        "description": "Backend service health check.",
+        "operationId": "get_health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/materials": {
+      "get": {
+        "summary": "Get Materials",
+        "description": "List supported materials with mechanical properties.",
+        "operationId": "get_materials_api_materials_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Material"
+                  },
+                  "type": "array",
+                  "title": "Response Get Materials Api Materials Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/limits": {
+      "get": {
+        "summary": "Get Limits",
+        "description": "Per-density ranges the dataset covers for this material (form hints and validation).",
+        "operationId": "get_limits_api_limits_get",
+        "parameters": [
+          {
+            "name": "material",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ti64",
+              "title": "Material"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Limits Api Limits Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reach": {
+      "post": {
+        "summary": "Post Reach",
+        "description": "Level (covered / extended / outside / infeasible), distance and the nearest achievable target.",
+        "operationId": "post_reach_api_reach_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReachResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/designs": {
+      "post": {
+        "summary": "Create Design",
+        "description": "Check the request against the dataset, reuse an identical earlier job, otherwise queue it. Returns 202.",
+        "operationId": "create_design_api_designs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{job_id}": {
+      "get": {
+        "summary": "Get Job Endpoint",
+        "description": "Query current status, stage, progress, and results of a design job from SQLite.",
+        "operationId": "get_job_endpoint_api_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Cancel Job",
+        "description": "Stop a job: a queued job is cancelled at once, a running one after its current search round.",
+        "operationId": "cancel_job_api_jobs__job_id__delete",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Job Api Jobs  Job Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{job_id}/cancel": {
+      "post": {
+        "summary": "Cancel Job",
+        "description": "Stop a job: a queued job is cancelled at once, a running one after its current search round.",
+        "operationId": "cancel_job_api_jobs__job_id__cancel_post",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Cancel Job Api Jobs  Job Id  Cancel Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{job_id}/events": {
+      "get": {
+        "summary": "Get Job Events",
+        "description": "Server-Sent Events: one event whenever the job's state changes, a comment ping every SSE_PING_S seconds,\nthen a final `close`. Reads the job record, so any number of listeners see the same stream. The page falls\nback to polling GET /api/jobs/{id} every 2 s if the stream drops.",
+        "operationId": "get_job_events_api_jobs__job_id__events_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/designs/{design_id}": {
+      "get": {
+        "summary": "Get Design",
+        "description": "Retrieve one saved candidate (lattice geometry, predicted and verified properties).",
+        "operationId": "get_design_api_designs__design_id__get",
+        "parameters": [
+          {
+            "name": "design_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Design Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Candidate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AxisValues": {
+        "properties": {
+          "x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "type": "object",
+        "title": "AxisValues",
+        "description": "Directional 3D physical property values (axes can be None)."
+      },
+      "Bounds": {
+        "properties": {
+          "stiffness_sum_max_gpa": {
+            "type": "number",
+            "title": "Stiffness Sum Max Gpa"
+          },
+          "strength_max_mpa": {
+            "type": "number",
+            "title": "Strength Max Mpa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stiffness_sum_max_gpa",
+          "strength_max_mpa"
+        ],
+        "title": "Bounds"
+      },
+      "Candidate": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique candidate identifier"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rank",
+            "description": "Ranking among candidate solutions"
+          },
+          "match_error_pct": {
+            "type": "number",
+            "title": "Match Error Pct",
+            "description": "Percentage error relative to target requirements"
+          },
+          "matches_targets": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matches Targets",
+            "description": "True when the solver confirms every target"
+          },
+          "rel_density": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Rel Density",
+            "description": "Relative volume density fraction"
+          },
+          "mass_g": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Mass G",
+            "description": "Total mass in grams"
+          },
+          "lattice": {
+            "$ref": "#/components/schemas/LatticeSpec",
+            "description": "Lattice structural geometry"
+          },
+          "predicted": {
+            "$ref": "#/components/schemas/PropertyEvaluation",
+            "description": "Properties predicted by the ML surrogate model"
+          },
+          "verified": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PropertyEvaluation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Properties verified by the physics solver"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "generated (made by the search) or nearest_stored (a lattice from the dataset)"
+          },
+          "mass_estimate": {
+            "type": "boolean",
+            "title": "Mass Estimate",
+            "description": "mass_g is density x part volume x material density",
+            "default": true
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Plain-language notes (printability, shortfall)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rank",
+          "match_error_pct",
+          "rel_density",
+          "mass_g",
+          "lattice",
+          "predicted"
+        ],
+        "title": "Candidate",
+        "description": "Candidate lattice design with topology, predicted, and verified properties."
+      },
+      "DesignModes": {
+        "properties": {
+          "stiffness": {
+            "$ref": "#/components/schemas/TargetMode",
+            "default": "about"
+          },
+          "strength": {
+            "$ref": "#/components/schemas/TargetMode",
+            "default": "at_least"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/TargetMode",
+            "default": "at_most"
+          }
+        },
+        "type": "object",
+        "title": "DesignModes",
+        "description": "Mode configurations for target criteria."
+      },
+      "DesignRequest": {
+        "properties": {
+          "material": {
+            "type": "string",
+            "title": "Material",
+            "description": "Material ID, e.g. 'ti64'"
+          },
+          "part": {
+            "$ref": "#/components/schemas/PartSpec",
+            "description": "Target part dimensions and cell sizing"
+          },
+          "target": {
+            "$ref": "#/components/schemas/DesignTarget",
+            "description": "Target physical properties"
+          },
+          "modes": {
+            "$ref": "#/components/schemas/DesignModes",
+            "description": "Optimization modes"
+          },
+          "tolerance_pct": {
+            "type": "number",
+            "maximum": 50.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Tolerance Pct",
+            "description": "Allowed deviation percentage",
+            "default": 10.0
+          },
+          "n_results": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "N Results",
+            "description": "Number of candidate lattice designs to return",
+            "default": 5
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "description": "Run even when the picker says no lattice can reach the target",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "material",
+          "part",
+          "target"
+        ],
+        "title": "DesignRequest",
+        "description": "Request payload for initiating a lattice design search."
+      },
+      "DesignTarget": {
+        "properties": {
+          "stiffness_gpa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetAxis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "strength_mpa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetAxis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "yield_strength_mpa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TargetAxis"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Advanced: first-yield strength instead of strength_mpa"
+          },
+          "max_mass_g": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Mass G"
+          },
+          "rel_density": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel Density",
+            "description": "Advanced: relative density instead of max_mass_g"
+          }
+        },
+        "type": "object",
+        "title": "DesignTarget",
+        "description": "Target performance criteria for the lattice optimization."
+      },
+      "FailureMode": {
+        "type": "string",
+        "enum": [
+          "yield",
+          "buckling"
+        ],
+        "title": "FailureMode",
+        "description": "Governing structural failure mode."
+      },
+      "FailureModeAxis": {
+        "properties": {
+          "x": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "y": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "z": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureMode"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "FailureModeAxis",
+        "description": "Governing failure mode per spatial axis (\"yield\", \"buckling\", or None)."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "ok"
+          },
+          "model_loaded": {
+            "type": "boolean",
+            "title": "Model Loaded",
+            "default": false
+          },
+          "gpu": {
+            "type": "boolean",
+            "title": "Gpu",
+            "default": false
+          },
+          "solver_workers": {
+            "type": "integer",
+            "title": "Solver Workers",
+            "default": 0
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason",
+            "description": "Why the models are not loaded, and the fix; null when fine"
+          }
+        },
+        "type": "object",
+        "title": "HealthResponse",
+        "description": "Backend service health and readiness status."
+      },
+      "JobCreateResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique generated job identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus",
+            "description": "Initial status of the queued job",
+            "default": "queued"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id"
+        ],
+        "title": "JobCreateResponse",
+        "description": "Response returned upon successfully queueing a design job."
+      },
+      "JobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id",
+            "description": "Unique job identifier"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus",
+            "description": "queued, running, done, failed or cancelled"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobStage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Current processing stage (search, repair, verify, rank)"
+          },
+          "round": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Round",
+            "description": "Current search round (1-based)"
+          },
+          "k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "K",
+            "description": "Starting points in the current round"
+          },
+          "progress": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Progress",
+            "description": "Completion progress from 0.0 to 1.0",
+            "default": 0.0
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message",
+            "description": "Informational or diagnostic status message"
+          },
+          "queue_position": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue Position",
+            "description": "0 = running next; None when not queued"
+          },
+          "rounds": {
+            "items": {
+              "$ref": "#/components/schemas/RoundInfo"
+            },
+            "type": "array",
+            "title": "Rounds",
+            "description": "Finished search rounds"
+          },
+          "infeasible": {
+            "type": "boolean",
+            "title": "Infeasible",
+            "description": "Stiffnesses add up to more than 1.05 x density x E_s",
+            "default": false
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "description": "Plain-language warnings"
+          },
+          "skipped_invalid": {
+            "type": "integer",
+            "title": "Skipped Invalid",
+            "description": "Candidates dropped because the solver result was not physical",
+            "default": 0
+          },
+          "reach": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reach",
+            "description": "Dataset picker result for the request"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/Candidate"
+            },
+            "type": "array",
+            "title": "Candidates",
+            "description": "List of generated lattice design candidates"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request",
+            "description": "The request this job was started with"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status"
+        ],
+        "title": "JobResponse",
+        "description": "Status and result response for a design job."
+      },
+      "JobStage": {
+        "type": "string",
+        "enum": [
+          "search",
+          "repair",
+          "verify",
+          "rank"
+        ],
+        "title": "JobStage",
+        "description": "Processing stage of a running design job."
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed",
+          "cancelled"
+        ],
+        "title": "JobStatus",
+        "description": "Lifecycle status of a design search and verification job."
+      },
+      "LatticeSpec": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "Lattice representation format",
+            "default": "octant27"
+          },
+          "nodes": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Nodes",
+            "description": "Lattice node 3D coordinates [[x, y, z], ...]"
+          },
+          "edges": {
+            "items": {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Edges",
+            "description": "Node connectivity graph edge pairs [[node_a, node_b], ...]"
+          },
+          "cell_size_mm": {
+            "type": "number",
+            "title": "Cell Size Mm",
+            "description": "Unit cell size in mm"
+          },
+          "strut_radius_mm": {
+            "type": "number",
+            "title": "Strut Radius Mm",
+            "description": "Strut radius in mm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges",
+          "cell_size_mm",
+          "strut_radius_mm"
+        ],
+        "title": "LatticeSpec",
+        "description": "Lattice graph topology and structural specifications."
+      },
+      "Material": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Unique material identifier, e.g. 'ti64'"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable material name, e.g. 'Ti-6Al-4V'"
+          },
+          "E_gpa": {
+            "type": "number",
+            "title": "E Gpa",
+            "description": "Young's modulus in GPa"
+          },
+          "yield_mpa": {
+            "type": "number",
+            "title": "Yield Mpa",
+            "description": "Yield strength in MPa"
+          },
+          "density_g_cm3": {
+            "type": "number",
+            "title": "Density G Cm3",
+            "description": "Material density in g/cm\u00b3"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "E_gpa",
+          "yield_mpa",
+          "density_g_cm3"
+        ],
+        "title": "Material",
+        "description": "Physical and mechanical material definition."
+      },
+      "PartSpec": {
+        "properties": {
+          "size_mm": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Size Mm",
+            "description": "Bounding dimensions [x, y, z] in mm"
+          },
+          "cell_mm": {
+            "type": "number",
+            "exclusiveMinimum": 0.0,
+            "title": "Cell Mm",
+            "description": "Unit cell dimension in mm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size_mm",
+          "cell_mm"
+        ],
+        "title": "PartSpec",
+        "description": "Geometry specification for the target lattice part."
+      },
+      "PropertyEvaluation": {
+        "properties": {
+          "stiffness_gpa": {
+            "$ref": "#/components/schemas/AxisValues",
+            "description": "Stiffness along x, y, z in GPa"
+          },
+          "yield_strength_mpa": {
+            "$ref": "#/components/schemas/AxisValues",
+            "description": "Yield strength along x, y, z in MPa"
+          },
+          "buckling_strength_mpa": {
+            "$ref": "#/components/schemas/AxisValues",
+            "description": "Buckling strength along x, y, z in MPa"
+          },
+          "strength_mpa": {
+            "$ref": "#/components/schemas/AxisValues",
+            "description": "Effective strength along x, y, z in MPa"
+          },
+          "governing_failure": {
+            "$ref": "#/components/schemas/FailureModeAxis",
+            "description": "Governing failure mode along x, y, z ('yield' or 'buckling')"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stiffness_gpa",
+          "yield_strength_mpa",
+          "buckling_strength_mpa",
+          "strength_mpa",
+          "governing_failure"
+        ],
+        "title": "PropertyEvaluation",
+        "description": "Directional mechanical and failure evaluations."
+      },
+      "ReachRequest": {
+        "properties": {
+          "material": {
+            "type": "string",
+            "title": "Material",
+            "description": "Material ID, e.g. 'ti64'"
+          },
+          "part": {
+            "$ref": "#/components/schemas/PartSpec"
+          },
+          "target": {
+            "$ref": "#/components/schemas/DesignTarget"
+          },
+          "modes": {
+            "$ref": "#/components/schemas/DesignModes"
+          },
+          "tolerance_pct": {
+            "type": "number",
+            "maximum": 50.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Tolerance Pct",
+            "default": 10.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "material",
+          "target"
+        ],
+        "title": "ReachRequest",
+        "description": "POST /api/reach: a target to check against the dataset (part size only matters for a mass limit)."
+      },
+      "ReachResponse": {
+        "properties": {
+          "level": {
+            "type": "string",
+            "title": "Level",
+            "description": "covered | extended | outside | infeasible"
+          },
+          "distance_pct": {
+            "type": "number",
+            "title": "Distance Pct"
+          },
+          "density": {
+            "type": "number",
+            "title": "Density"
+          },
+          "requested": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Requested"
+          },
+          "nearest": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Nearest"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/Bounds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "conflict": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conflict",
+            "description": "The value hardest to match, when no stored lattice is close"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level",
+          "distance_pct",
+          "density",
+          "requested",
+          "nearest",
+          "bounds",
+          "message"
+        ],
+        "title": "ReachResponse"
+      },
+      "RoundInfo": {
+        "properties": {
+          "round": {
+            "type": "integer",
+            "title": "Round"
+          },
+          "k": {
+            "type": "integer",
+            "title": "K"
+          },
+          "best_error_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Error Pct"
+          },
+          "matched": {
+            "type": "boolean",
+            "title": "Matched",
+            "default": false
+          },
+          "n_candidates": {
+            "type": "integer",
+            "title": "N Candidates",
+            "default": 0
+          },
+          "round_seconds": {
+            "type": "number",
+            "title": "Round Seconds",
+            "default": 0.0
+          },
+          "elapsed_seconds": {
+            "type": "number",
+            "title": "Elapsed Seconds",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "round",
+          "k"
+        ],
+        "title": "RoundInfo",
+        "description": "One search round, as the engine reports it (best_error_pct is already in percent)."
+      },
+      "TargetAxis": {
+        "properties": {
+          "x": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Y"
+          },
+          "z": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Z"
+          }
+        },
+        "type": "object",
+        "title": "TargetAxis",
+        "description": "Per-axis target: positive finite numbers, or null to ignore that axis."
+      },
+      "TargetMode": {
+        "type": "string",
+        "enum": [
+          "about",
+          "at_least",
+          "at_most",
+          "exact",
+          "minimize",
+          "maximize"
+        ],
+        "title": "TargetMode",
+        "description": "Optimization target comparison mode."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

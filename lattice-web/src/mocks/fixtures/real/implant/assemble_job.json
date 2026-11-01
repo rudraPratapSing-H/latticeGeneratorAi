@@ -1,0 +1,32 @@
+{
+  "job_id": "a_8066d206",
+  "status": "done",
+  "stage": "export",
+  "round": null,
+  "k": null,
+  "progress": 1.0,
+  "message": "Implant ready",
+  "queue_position": null,
+  "rounds": [],
+  "infeasible": false,
+  "warnings": [],
+  "kind": "assemble",
+  "implant_id": "i_48442fc4",
+  "summary": {
+    "length_mm": 160.0,
+    "cell_mm": 5.5,
+    "interface_mm": 0.6,
+    "sides": 8,
+    "triangles": 73588,
+    "volume_mm3": 88820.23353537527,
+    "mass_g": 393.4736345617124,
+    "lattice_share_pct": 2.22002019857674,
+    "stl_bytes": 3679484,
+    "mass_label": "geometry_only"
+  },
+  "zone_id": null,
+  "skipped_invalid": 0,
+  "reach": null,
+  "candidates": [],
+  "request": null
+}
